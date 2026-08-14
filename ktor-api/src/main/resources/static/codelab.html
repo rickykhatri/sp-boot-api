@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Code Lab - Ricky Khatri AI</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg-1: #081120;
+      --bg-2: #0b1d39;
+      --bg-3: #123d66;
+      --panel: rgba(15, 23, 42, 0.82);
+      --panel-border: rgba(148, 163, 184, 0.18);
+      --text: #e5eefb;
+      --muted: #9fb2cc;
+      --accent: #60a5fa;
+      --accent-2: #34d399;
+      --warning: #fbbf24;
+      --danger: #f87171;
+      --shadow: 0 30px 80px rgba(0, 0, 0, 0.36);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(96, 165, 250, 0.22), transparent 35%),
+        radial-gradient(circle at right center, rgba(52, 211, 153, 0.14), transparent 28%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2) 48%, var(--bg-3));
+      padding: 24px;
+    }
+
+    .page {
+      width: 100%;
+      max-width: 1180px;
+      margin: 0 auto;
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      overflow: hidden;
+    }
+
+    .hero {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding: 28px 28px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(17, 24, 39, 0.7));
+    }
+
+    .eyebrow {
+      text-transform: uppercase;
+      letter-spacing: 0.22em;
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: #93c5fd;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      line-height: 1;
+    }
+
+    .subtitle {
+      margin: 0;
+      max-width: 68ch;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      padding: 20px;
+    }
+
+    .card {
+      background: rgba(2, 6, 23, 0.52);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 22px;
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .tool-status {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .tool-hint {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+
+    .field,
+    .code-editor {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      background: rgba(15, 23, 42, 0.88);
+      color: var(--text);
+      padding: 14px 16px;
+      font: inherit;
+      outline: none;
+    }
+
+    .editor-shell {
+      position: relative;
+      width: 100%;
+    }
+
+    .code-highlighter {
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      border: 1px solid transparent;
+      background: rgba(15, 23, 42, 0.88);
+      color: #dbeafe;
+      padding: 14px 16px;
+      margin: 0;
+      overflow: hidden;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.5;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      pointer-events: none;
+    }
+
+    .code-highlighter .token-keyword { color: #93c5fd; }
+    .code-highlighter .token-type { color: #f9a8d4; }
+    .code-highlighter .token-string { color: #86efac; }
+    .code-highlighter .token-comment { color: #94a3b8; font-style: italic; }
+    .code-highlighter .token-number { color: #fbbf24; }
+    .code-highlighter .token-fn { color: #67e8f9; }
+    .code-highlighter .token-annotation { color: #c084fc; }
+    .code-highlighter .token-operator { color: #e5eefb; }
+    .code-highlighter .token-plain { color: #dbeafe; }
+
+    .field:focus,
+    .code-editor:focus {
+      border-color: rgba(96, 165, 250, 0.65);
+      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.16);
+    }
+
+    .code-editor {
+      position: relative;
+      z-index: 1;
+      min-height: 440px;
+      resize: vertical;
+      line-height: 1.5;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      white-space: pre;
+      background: transparent;
+      color: transparent;
+      caret-color: #e5eefb;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .code-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .editor-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .editor-toolbar .toolbar-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .suggestion-panel {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .suggestion-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .suggestion-chip {
+      appearance: none;
+      border: 1px solid rgba(96, 165, 250, 0.22);
+      background: rgba(96, 165, 250, 0.12);
+      color: #dbeafe;
+      border-radius: 999px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+      text-align: left;
+      transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .suggestion-chip:hover {
+      transform: translateY(-1px);
+      background: rgba(96, 165, 250, 0.2);
+      border-color: rgba(96, 165, 250, 0.42);
+    }
+
+    .suggestion-chip.active {
+      background: rgba(52, 211, 153, 0.18);
+      border-color: rgba(52, 211, 153, 0.58);
+      color: #ecfdf5;
+      box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.12);
+    }
+
+    .suggestion-empty {
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .button {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 11px 16px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+    }
+
+    .button:hover { transform: translateY(-1px); }
+    .button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .button.primary {
+      background: linear-gradient(135deg, #60a5fa, #2563eb);
+      color: #eff6ff;
+      box-shadow: 0 10px 24px rgba(37, 99, 235, 0.28);
+    }
+
+    .button.secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .output-panel {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .output {
+      min-height: 340px;
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.55;
+      color: #dbeafe;
+    }
+
+    .output.empty {
+      color: #94a3b8;
+    }
+
+    .stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sidebar {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .output-drawer {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      width: min(720px, calc(100vw - 48px));
+      max-height: min(72vh, 760px);
+      background: rgba(2, 6, 23, 0.96);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 22px;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.42);
+      overflow: hidden;
+      display: none;
+      z-index: 40;
+    }
+
+    .output-drawer.open {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    .output-drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .output-drawer-body {
+      padding: 16px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.55;
+      color: #dbeafe;
+    }
+
+    .output-drawer-title {
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .output-drawer-close {
+      border: 0;
+      background: rgba(255, 255, 255, 0.08);
+      color: #eff6ff;
+      border-radius: 999px;
+      width: 38px;
+      height: 38px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
+    @media (max-width: 960px) {
+      .content { grid-template-columns: 1fr; }
+      .code-editor { min-height: 280px; }
+      .output-drawer { width: calc(100vw - 24px); right: 12px; bottom: 12px; }
+    }
+
+    @media (max-width: 640px) {
+      body { padding: 12px; }
+      .hero, .content { padding-left: 14px; padding-right: 14px; }
+      .page { border-radius: 20px; }
+      .button { width: 100%; }
+      .hero-actions { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div>
+        <div class="eyebrow">Ricky Khatri AI</div>
+        <h1>Kotlin Code Lab</h1>
+        <p class="subtitle">Generate, edit, validate, and run Kotlin snippets in a dedicated workspace. Use the generator for fast drafts, then refine the code directly in the editor.</p>
+      </div>
+      <div class="hero-actions">
+        <a class="button secondary" href="/index.html">Back to Chatbot</a>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="card stack">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Generator and editor</div>
+            <div class="tool-hint">Describe what you want, generate a snippet, then run the code directly from this page.</div>
+          </div>
+        </div>
+
+        <input id="codePromptInput" class="field" type="text" placeholder="Describe the Kotlin code you want generated" />
+        <div class="editor-shell">
+          <pre id="codeHighlighter" class="code-highlighter" aria-hidden="true"></pre>
+          <textarea id="kotlinCodeInput" class="code-editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" placeholder="Paste Kotlin code here to run it..."></textarea>
+        </div>
+
+        <div class="editor-toolbar">
+          <div class="toolbar-group">
+            <button id="formatCodeBtn" class="button secondary" type="button">Auto Format</button>
+            <button id="toggleAutoFormatBtn" class="button secondary" type="button">Auto Format: Off</button>
+          </div>
+          <div class="tool-hint">Type <strong>prin</strong> to see built-in completions like <strong>println()</strong> and press Ctrl+Space for insertable suggestions.</div>
+        </div>
+      </div>
+
+      <div class="sidebar">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Actions</div>
+              <div class="tool-hint">Generate, run, copy, or clear the code from the right side.</div>
+            </div>
+          </div>
+          <div id="codeStatus" class="tool-status">Ready to generate or run Kotlin code.</div>
+          <div class="code-actions">
+            <button id="generateCodeBtn" class="button primary" type="button">Generate Kotlin</button>
+            <button id="runCodeBtn" class="button secondary" type="button">Run Kotlin</button>
+            <button id="copyCodeBtn" class="button secondary" type="button">Copy Code</button>
+            <button id="clearCodeBtn" class="button secondary" type="button">Clear</button>
+          </div>
+        </div>
+
+        <div class="suggestion-panel" aria-label="Coding suggestions">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Live coding suggestions</div>
+              <div id="codeSuggestionHint" class="tool-hint">Suggestions update as you type. Press Ctrl+Space to open completions.</div>
+            </div>
+          </div>
+          <div id="codeSuggestionList" class="suggestion-list"></div>
+          <div id="codeSuggestionEmpty" class="suggestion-empty">Start typing Kotlin code to see suggestions.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <site-footer></site-footer>
+
+  <section id="outputDrawer" class="output-drawer" aria-live="polite" aria-label="Run output">
+    <div class="output-drawer-header">
+      <div>
+        <div class="output-drawer-title">Run output</div>
+        <div class="tool-hint">Compiler errors, runtime errors, or printed output appear here.</div>
+      </div>
+      <button id="closeOutputBtn" class="output-drawer-close" type="button" aria-label="Close run output">×</button>
+    </div>
+    <div id="codeOutput" class="output-drawer-body">Kotlin run output will appear here.</div>
+  </section>
+
+  <script src="/site-footer.js"></script>
+
+  <script>
+    const codePromptInput = document.getElementById('codePromptInput');
+    const kotlinCodeInput = document.getElementById('kotlinCodeInput');
+    const codeStatus = document.getElementById('codeStatus');
+    const codeOutput = document.getElementById('codeOutput');
+    const generateCodeBtn = document.getElementById('generateCodeBtn');
+    const runCodeBtn = document.getElementById('runCodeBtn');
+    const copyCodeBtn = document.getElementById('copyCodeBtn');
+    const clearCodeBtn = document.getElementById('clearCodeBtn');
+    const formatCodeBtn = document.getElementById('formatCodeBtn');
+    const toggleAutoFormatBtn = document.getElementById('toggleAutoFormatBtn');
+    const closeOutputBtn = document.getElementById('closeOutputBtn');
+    const outputDrawer = document.getElementById('outputDrawer');
+    const codeSuggestionList = document.getElementById('codeSuggestionList');
+    const codeSuggestionEmpty = document.getElementById('codeSuggestionEmpty');
+    const codeSuggestionHint = document.getElementById('codeSuggestionHint');
+    const codeHighlighter = document.getElementById('codeHighlighter');
+
+    let currentCodeSuggestions = [];
+    let activeSuggestionIndex = 0;
+    let suggestionOpen = false;
+    let autoFormatEnabled = false;
+    let inputFormatTimer = null;
+
+    const builtInCompletions = [
+      { prefix: 'prin', label: 'println()', snippet: 'println()', insertCursorOffset: 8 },
+      { prefix: 'prin', label: 'print()', snippet: 'print()', insertCursorOffset: 6 },
+      { prefix: 'read', label: 'readln()', snippet: 'readln()', insertCursorOffset: 7 },
+      { prefix: 'cons', label: 'const val', snippet: 'const val ', insertCursorOffset: 10 },
+      { prefix: 'mut', label: 'mutableListOf()', snippet: 'mutableListOf()', insertCursorOffset: 15 },
+      { prefix: 'list', label: 'listOf()', snippet: 'listOf()', insertCursorOffset: 8 },
+      { prefix: 'map', label: 'mapOf()', snippet: 'mapOf()', insertCursorOffset: 7 },
+      { prefix: 'arri', label: 'arrayOf()', snippet: 'arrayOf()', insertCursorOffset: 9 }
+    ];
+
+    const suggestionTemplates = [
+      {
+        label: 'Wrap code in main()',
+        match: () => true,
+        snippet: 'fun main() {\n    \n}',
+        insertCursorOffset: 17
+      },
+      {
+        label: 'Print a value',
+        match: (code) => !/println\s*\(/.test(code),
+        snippet: 'println("Hello from Kotlin")',
+        insertCursorOffset: 29
+      },
+      {
+        label: 'Use var for reassignment',
+        match: (code) => /\bval\s+\w+\s*=.*(\n|$)[\s\S]*\b\w+\s*\+\+|\b\w+\s*=/.test(code) || /\bval\s+\w+\s*=/.test(code),
+        snippet: 'var counter = 0\ncounter++',
+        insertCursorOffset: 4
+      },
+      {
+        label: 'Iterate a list',
+        match: (code) => /List<|MutableList<|\bfor\s*\(/.test(code),
+        snippet: 'for (item in items) {\n    println(item)\n}',
+        insertCursorOffset: 27
+      },
+      {
+        label: 'Create a data class',
+        match: (code) => /data\s+class|class\s+\w+/.test(code) || code.trim().length < 30,
+        snippet: 'data class User(val id: Int, val name: String)',
+        insertCursorOffset: 15
+      }
+    ];
+
+    generateCodeBtn.addEventListener('click', generateKotlinCode);
+    runCodeBtn.addEventListener('click', runKotlinCode);
+    copyCodeBtn.addEventListener('click', copyKotlinCode);
+    clearCodeBtn.addEventListener('click', clearKotlinCode);
+    formatCodeBtn.addEventListener('click', formatKotlinCode);
+    toggleAutoFormatBtn.addEventListener('click', toggleAutoFormat);
+    closeOutputBtn.addEventListener('click', hideRunOutput);
+    kotlinCodeInput.addEventListener('input', updateCodeSuggestions);
+    kotlinCodeInput.addEventListener('keydown', handleCodeEditorKeydown);
+    kotlinCodeInput.addEventListener('scroll', syncCodeHighlightScroll);
+    codePromptInput.addEventListener('input', updateCodeSuggestions);
+    updateCodeSuggestions();
+    updateCodeHighlight();
+    installInspectDeterrents();
+
+    async function generateKotlinCode() {
+      const prompt = codePromptInput.value.trim();
+      if (!prompt) {
+        codeStatus.textContent = 'Describe the Kotlin code you want generated.';
+        return;
+      }
+
+      codeStatus.textContent = 'Generating Kotlin code...';
+      generateCodeBtn.disabled = true;
+
+      try {
+        const payload = await requestChatReply(
+          `Generate compilable Kotlin 1.9 code for the following request. Follow these rules strictly:\n` +
+          `- Return only one Kotlin fenced code block.\n` +
+          `- Use only the Kotlin standard library.\n` +
+          `- Declare every variable before use.\n` +
+          `- If a value is reassigned, declare it with var, not val.\n` +
+          `- Never reassign a val.\n` +
+          `- Prefer immutable values and expression-based code when possible.\n` +
+          `- Do not use placeholder identifiers like str, value, item, or result unless they are declared.\n` +
+          `- Prefer explicit types and complete snippets.\n` +
+          `- If the task is a runnable example, include a main function.\n\n` +
+          `Task: ${prompt}`
+        );
+
+        let generatedCode = extractKotlinCodeFromResponse(payload.reply || '');
+        if (generatedCode) {
+          kotlinCodeInput.value = generatedCode;
+          updateCodeHighlight();
+          let validation = await validateKotlinCode(generatedCode);
+          let repairAttempts = 0;
+
+          while (!validation.success && repairAttempts < 2) {
+            const repairedCode = await repairKotlinCode(
+              prompt,
+              generatedCode,
+              validation.error || validation.output || 'Validation failed.'
+            );
+
+            if (!repairedCode || repairedCode === generatedCode) {
+              break;
+            }
+
+            generatedCode = repairedCode;
+            kotlinCodeInput.value = generatedCode;
+            updateCodeHighlight();
+            validation = await validateKotlinCode(generatedCode);
+            repairAttempts += 1;
+          }
+
+          if (validation.success) {
+            setCodeOutput('Generated Kotlin code is ready to run.');
+            codeStatus.textContent = 'Kotlin code generated and validated.';
+          } else {
+            setCodeOutput(`Validation error: ${validation.error || validation.output || 'Unknown error.'}`);
+            codeStatus.textContent = 'Generated code still needs a manual fix.';
+          }
+        } else {
+          setCodeOutput('No code block found in the response.');
+          codeStatus.textContent = 'No code block found in the response.';
+        }
+      } catch (error) {
+        setCodeOutput(`Error: ${error.message}`);
+        codeStatus.textContent = 'Unable to generate Kotlin code.';
+      } finally {
+        generateCodeBtn.disabled = false;
+      }
+    }
+
+    async function requestChatReply(message) {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message,
+          history: []
+        })
+      });
+
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload?.reply || `Request failed with status ${response.status}`);
+      }
+
+      return payload;
+    }
+
+    async function validateKotlinCode(code) {
+      const response = await fetch('/api/code/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code })
+      });
+
+      return response.json();
+    }
+
+    async function repairKotlinCode(prompt, code, errorMessage) {
+      const repairedReply = await requestChatReply(
+        `Fix the following Kotlin code so it compiles in this Kotlin script runner. Return only one Kotlin fenced code block. ` +
+        `Preserve the requested behavior and use only the Kotlin standard library. ` +
+        `If any value is reassigned, change it to var. Never reassign a val.\n\n` +
+        `Task: ${prompt}\n\n` +
+        `Current code:\n\n\`\`\`kotlin\n${code}\n\`\`\`\n\n` +
+        `Compiler or runtime error:\n${errorMessage}`
+      );
+
+      const repairedCode = extractKotlinCodeFromResponse(repairedReply.reply || '');
+      if (repairedCode) {
+        return repairedCode;
+      }
+
+      return '';
+    }
+
+    async function runKotlinCode() {
+      const code = kotlinCodeInput.value.trim();
+      if (!code) {
+        codeStatus.textContent = 'Paste Kotlin code to run it.';
+        return;
+      }
+
+      codeStatus.textContent = 'Running Kotlin code...';
+      runCodeBtn.disabled = true;
+      showRunOutput('Kotlin run output will appear here.');
+
+      try {
+        const response = await fetch('/api/code/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code })
+        });
+
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload?.error || payload?.output || `Request failed with status ${response.status}`);
+        }
+
+        const resultText = payload.output || 'Execution completed with no output.';
+        setCodeOutput(payload.success ? resultText : `Error: ${payload.error || resultText}`);
+        showRunOutput();
+        codeStatus.textContent = payload.success ? 'Kotlin code ran successfully.' : 'Kotlin code returned an error.';
+      } catch (error) {
+        setCodeOutput(`Error: ${error.message}`);
+        showRunOutput();
+        codeStatus.textContent = 'Unable to run Kotlin code.';
+      } finally {
+        runCodeBtn.disabled = false;
+      }
+    }
+
+    async function copyKotlinCode() {
+      const code = kotlinCodeInput.value.trim();
+      if (!code) {
+        codeStatus.textContent = 'Nothing to copy yet.';
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(code);
+        codeStatus.textContent = 'Kotlin code copied to clipboard.';
+      } catch (error) {
+        codeStatus.textContent = 'Unable to copy code in this browser.';
+      }
+    }
+
+    function clearKotlinCode() {
+      kotlinCodeInput.value = '';
+      codePromptInput.value = '';
+      setCodeOutput('Kotlin run output will appear here.');
+      codeStatus.textContent = 'Code editor cleared.';
+      suggestionOpen = false;
+      activeSuggestionIndex = 0;
+      updateCodeSuggestions();
+      updateCodeHighlight();
+    }
+
+    function toggleAutoFormat() {
+      autoFormatEnabled = !autoFormatEnabled;
+      toggleAutoFormatBtn.textContent = `Auto Format: ${autoFormatEnabled ? 'On' : 'Off'}`;
+      codeStatus.textContent = autoFormatEnabled ? 'Auto format enabled.' : 'Auto format disabled.';
+      if (autoFormatEnabled) {
+        formatKotlinCode();
+      }
+    }
+
+    function setCodeOutput(text) {
+      codeOutput.textContent = text || 'Kotlin run output will appear here.';
+      codeOutput.classList.toggle('empty', !text || text === 'Kotlin run output will appear here.');
+    }
+
+    function showRunOutput(initialText) {
+      if (initialText) {
+        codeOutput.textContent = initialText;
+      }
+
+      outputDrawer.classList.add('open');
+    }
+
+    function hideRunOutput() {
+      outputDrawer.classList.remove('open');
+    }
+
+    function extractKotlinCodeFromResponse(responseText) {
+      const match = String(responseText || '').match(/```(?:kotlin|kt)?\s*([\s\S]*?)```/i);
+      if (match) {
+        return match[1].trim();
+      }
+
+      return '';
+    }
+
+    function updateCodeSuggestions() {
+      updateCodeHighlight();
+
+      const code = kotlinCodeInput.value.trim();
+      const prompt = codePromptInput.value.trim();
+      const caretWord = getCurrentWord();
+      currentCodeSuggestions = buildCodeSuggestions(code, prompt, caretWord);
+      const suggestions = currentCodeSuggestions;
+
+      codeSuggestionList.innerHTML = '';
+
+      if (!suggestions.length) {
+        codeSuggestionEmpty.textContent = sourceText
+          ? 'No extra suggestions right now. Keep typing or use Generate Kotlin.'
+          : 'Start typing Kotlin code to see suggestions.';
+        codeSuggestionEmpty.hidden = false;
+        return;
+      }
+
+      codeSuggestionEmpty.hidden = true;
+      codeSuggestionHint.textContent = suggestionOpen
+        ? 'Use Arrow keys to move, Enter or Tab to insert, Esc to close.'
+        : 'Suggestions update as you type. Press Ctrl+Space to open completions.';
+
+      if (activeSuggestionIndex >= suggestions.length) {
+        activeSuggestionIndex = 0;
+      }
+
+      suggestions.forEach((suggestion) => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = `suggestion-chip${suggestions[activeSuggestionIndex] === suggestion ? ' active' : ''}`;
+        chip.textContent = suggestion.label;
+        chip.title = suggestion.preview;
+        chip.setAttribute('aria-pressed', suggestions[activeSuggestionIndex] === suggestion ? 'true' : 'false');
+        chip.addEventListener('click', () => insertCodeSuggestion(suggestion));
+        codeSuggestionList.appendChild(chip);
+      });
+
+      if (autoFormatEnabled) {
+        window.clearTimeout(inputFormatTimer);
+        inputFormatTimer = window.setTimeout(() => {
+          formatKotlinCode(false);
+        }, 700);
+      }
+    }
+
+    function handleCodeEditorKeydown(event) {
+      const isCompletionShortcut = event.ctrlKey && event.code === 'Space';
+      const hasSuggestions = currentCodeSuggestions.length > 0;
+
+      if (isCompletionShortcut) {
+        event.preventDefault();
+        suggestionOpen = true;
+        activeSuggestionIndex = 0;
+        updateCodeSuggestions();
+        codeStatus.textContent = 'Code completions opened. Use arrow keys or Enter.';
+        return;
+      }
+
+      if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'f') {
+        event.preventDefault();
+        formatKotlinCode();
+        return;
+      }
+
+      if (!suggestionOpen || !hasSuggestions) {
+        return;
+      }
+
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        activeSuggestionIndex = (activeSuggestionIndex + 1) % currentCodeSuggestions.length;
+        updateCodeSuggestions();
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        activeSuggestionIndex = (activeSuggestionIndex - 1 + currentCodeSuggestions.length) % currentCodeSuggestions.length;
+        updateCodeSuggestions();
+      } else if (event.key === 'Enter' || event.key === 'Tab') {
+        event.preventDefault();
+        insertCodeSuggestion(currentCodeSuggestions[activeSuggestionIndex]);
+        suggestionOpen = false;
+        updateCodeSuggestions();
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        suggestionOpen = false;
+        codeSuggestionHint.textContent = 'Suggestions update as you type. Press Ctrl+Space to open completions.';
+        updateCodeSuggestions();
+      }
+    }
+
+    function buildCodeSuggestions(codeText, promptText, currentWord) {
+      const code = String(codeText || '');
+      const prompt = String(promptText || '');
+      const prefix = String(currentWord || '').toLowerCase();
+      const suggestions = [];
+
+      const builtinMatches = builtInCompletions.filter((item) => {
+        if (!prefix) {
+          return item.prefix.length <= 4;
+        }
+
+        return item.prefix.startsWith(prefix) || item.label.toLowerCase().startsWith(prefix);
+      });
+
+      builtinMatches.forEach((item) => {
+        suggestions.push({
+          label: item.label,
+          snippet: item.snippet,
+          insertCursorOffset: item.insertCursorOffset,
+          preview: item.snippet
+        });
+      });
+
+      suggestionTemplates.forEach((template) => {
+        if (template.match(code, prompt, prefix)) {
+          suggestions.push(template);
+        }
+      });
+
+      return suggestions.slice(0, 6).map((template) => ({
+        ...template,
+        preview: template.snippet
+      }));
+    }
+
+    function insertCodeSuggestion(suggestion) {
+      const editor = kotlinCodeInput;
+      const snippet = suggestion.snippet;
+      const start = editor.selectionStart ?? editor.value.length;
+      const end = editor.selectionEnd ?? editor.value.length;
+      const currentValue = editor.value;
+      const nextValue = `${currentValue.slice(0, start)}${snippet}${currentValue.slice(end)}`;
+
+      editor.value = nextValue;
+      const cursorPosition = Math.min(nextValue.length, start + (suggestion.insertCursorOffset ?? snippet.length));
+      editor.focus();
+      editor.setSelectionRange(cursorPosition, cursorPosition);
+      codeStatus.textContent = `Inserted suggestion: ${suggestion.label.toLowerCase()}.`;
+      suggestionOpen = false;
+      updateCodeSuggestions();
+    }
+
+    function getCurrentWord() {
+      const value = kotlinCodeInput.value;
+      const cursor = kotlinCodeInput.selectionStart ?? value.length;
+      const beforeCursor = value.slice(0, cursor);
+      const match = beforeCursor.match(/([A-Za-z_][A-Za-z0-9_]*)$/);
+      return match ? match[1] : '';
+    }
+
+    function formatKotlinCode(announce = true) {
+      const formatted = formatKotlinSource(kotlinCodeInput.value);
+      if (formatted === kotlinCodeInput.value) {
+        if (announce) {
+          codeStatus.textContent = 'Code is already formatted.';
+        }
+        return;
+      }
+
+      const cursor = kotlinCodeInput.selectionStart ?? formatted.length;
+      kotlinCodeInput.value = formatted;
+      updateCodeHighlight();
+      updateCodeSuggestions();
+      kotlinCodeInput.setSelectionRange(Math.min(cursor, formatted.length), Math.min(cursor, formatted.length));
+      if (announce) {
+        codeStatus.textContent = 'Kotlin code formatted.';
+      }
+    }
+
+    function formatKotlinSource(source) {
+      const lines = String(source || '').replace(/\t/g, '  ').split(/\r?\n/);
+      let indentLevel = 0;
+      const formattedLines = [];
+
+      lines.forEach((line) => {
+        const trimmed = line.trim();
+        if (!trimmed) {
+          formattedLines.push('');
+          return;
+        }
+
+        const dedentBefore = /^\}|^\)|^\]|^else\b|^catch\b|^finally\b/.test(trimmed);
+        if (dedentBefore && indentLevel > 0) {
+          indentLevel -= 1;
+        }
+
+        formattedLines.push(`${'  '.repeat(indentLevel)}${trimmed}`);
+
+        const opensBlock = /\{$/.test(trimmed) || /\b(else|try|catch|finally|when|if|for|while|do|fun|class|object|interface|enum)\b.*\{$/.test(trimmed);
+        const closesBlock = /\}$/.test(trimmed);
+
+        if (opensBlock && !closesBlock) {
+          indentLevel += 1;
+        }
+      });
+
+      return formattedLines.join('\n').trimEnd();
+    }
+
+    function syncCodeHighlightScroll() {
+      codeHighlighter.scrollTop = kotlinCodeInput.scrollTop;
+      codeHighlighter.scrollLeft = kotlinCodeInput.scrollLeft;
+    }
+
+    function updateCodeHighlight() {
+      const code = kotlinCodeInput.value || '';
+      codeHighlighter.innerHTML = renderKotlinHighlight(code);
+      syncCodeHighlightScroll();
+    }
+
+    function renderKotlinHighlight(source) {
+      const text = String(source || '');
+      const tokens = [];
+      const keywordPattern = /\b(as|break|class|continue|do|else|false|for|fun|if|in|interface|is|null|object|package|return|super|this|throw|true|try|typealias|val|var|when|while|by|catch|constructor|delegate|dynamic|field|file|finally|get|import|init|param|property|receiver|set|setparam|where|actual|abstract|annotation|companion|const|crossinline|data|enum|expect|external|final|infix|inline|inner|internal|lateinit|noinline|open|operator|out|override|private|protected|public|reified|sealed|suspend|tailrec|vararg)\b/g;
+      const typePattern = /\b(Boolean|Byte|Char|Double|Float|Int|Long|Short|String|Any|Unit|Nothing|Array|List|MutableList|Set|MutableSet|Map|MutableMap|Pair|Triple|IntArray|LongArray|FloatArray|DoubleArray|BooleanArray|CharArray|ByteArray|ShortArray)\b/g;
+      const annotationPattern = /(@[A-Za-z_][A-Za-z0-9_]*)/g;
+      const numberPattern = /\b\d+(?:\.\d+)?[fFlL]?\b/g;
+      const stringPattern = /("""[\s\S]*?"""|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])')/g;
+      const commentPattern = /(\/\/.*$|\/\*[\s\S]*?\*\/)/gm;
+
+      const ranges = [];
+
+      const addMatches = (pattern, className) => {
+        let match;
+        while ((match = pattern.exec(text)) !== null) {
+          ranges.push({ start: match.index, end: match.index + match[0].length, className });
+        }
+      };
+
+      addMatches(commentPattern, 'token-comment');
+      addMatches(stringPattern, 'token-string');
+      addMatches(annotationPattern, 'token-annotation');
+      addMatches(keywordPattern, 'token-keyword');
+      addMatches(typePattern, 'token-type');
+      addMatches(numberPattern, 'token-number');
+
+      ranges.sort((left, right) => left.start - right.start || right.end - left.end);
+
+      const merged = [];
+      let cursor = 0;
+
+      ranges.forEach((range) => {
+        if (range.start < cursor) {
+          return;
+        }
+
+        if (cursor < range.start) {
+          merged.push({ text: text.slice(cursor, range.start), className: 'token-plain' });
+        }
+
+        merged.push({ text: text.slice(range.start, range.end), className: range.className });
+        cursor = range.end;
+      });
+
+      if (cursor < text.length) {
+        merged.push({ text: text.slice(cursor), className: 'token-plain' });
+      }
+
+      if (!merged.length) {
+        merged.push({ text: '', className: 'token-plain' });
+      }
+
+      return merged.map((token) => `<span class="${token.className}">${escapeHtml(token.text || ' ')}</span>`).join('').replace(/\n/g, '<br/>');
+    }
+
+    function installInspectDeterrents() {
+      document.addEventListener('contextmenu', (event) => {
+        event.preventDefault();
+      });
+
+      document.addEventListener('keydown', (event) => {
+        const key = String(event.key || '').toLowerCase();
+        const isInspectShortcut =
+          key === 'f12' ||
+          (event.ctrlKey && event.shiftKey && ['i', 'j', 'c'].includes(key)) ||
+          (event.ctrlKey && key === 'u') ||
+          (event.metaKey && event.altKey && ['i', 'j', 'c'].includes(key));
+
+        if (isInspectShortcut) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }, true);
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+  </script>
+</body>
+</html>

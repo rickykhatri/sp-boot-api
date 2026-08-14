@@ -1,0 +1,286 @@
+### Get Hello World
+GET http://localhost:8080/api/hello
+
+###
+
+### Get RO ETA
+GET https://character-flavorful-deceit.ngrok-free.dev/api/ro/eta
+ngrok-skip-browser-warning: true
+
+###
+
+### Get Hello by Name
+GET http://localhost:8080/api/hello/Kotlin
+
+###
+
+### Post Hello
+POST http://localhost:8080/api/hello
+Content-Type: application/json
+
+{
+    "name": "Ricky",
+    "age": 30,
+    "email": "ricky@example.com"
+}
+
+### Post Show Json
+POST http://localhost:8080/api/showJson
+Content-Type: application/json      
+
+{
+  "statusCode": 200,
+  "status": "SUCCESS",
+  "requestTrackingId": "8282360168546010",
+  "errorMsg": {
+    "msg": "no data available"
+  },
+  "data": {
+    "wasteStreams": {
+      "OTHERS": {
+        "services": [
+          {
+            "customerId": "000234074863012",
+            "serviceId": "1",
+            "inquiryDate": "2026-02-17T00:00:00.000Z",
+            "pickupScheduleInfo": {
+              "schedule": "At your request",
+              "message": null,
+              "pickupDates": ["06-17-2026"],
+              "date": null,
+              "messageDesc": null
+            },
+            "pickupDayInfo": {
+              "date": "06-17-2026",
+              "message": "REFER TO PICKUP SCHEDULE",
+              "messageDesc": "We’re sorry, but we are unable to provide a service pickup date at this time. Please check back, or contact Customer Support if the problem persists"
+            },
+            "eta": [
+              {
+                "code": "UnabletoComputeETA",
+                "message": "We are gathering information about your route",
+                "messageHead": [
+                  "ETA Coming Soon"
+                ],
+                "servicedDate": null,
+                "servicedTime": null,
+                "ticketNumber": "263120",
+                "loadType": "DEL",
+                "liveChat": false
+              }
+            ],
+            "category": "OPEN MARKET",
+            "wasteStream": "DEMO",
+            "wasteStreamGroupCode": null,
+            "ticketType": "",
+            "isXPU": false,
+            "mpuMessageDetail": "We are gathering information about your route",
+            "mpuNotEligibleReason": "",
+            "exceptionReasonCode": "UnabletoComputeETA",
+            "exceptionType": "",
+            "lineOfBusiness": "ROLLOFF",
+            "nextOrderDate": "",
+            "previousOrder": {},
+            "removalOrderDate": ""
+          }
+        ]
+      }
+    },
+    "errors": {
+      "serverErrors": [],
+      "customerNotFound": []
+    }
+  },
+  "loggedInStatus": "loggedIn"
+}
+
+### Post Math addition
+POST http://localhost:8080/api/math/add
+Content-Type: application/json  
+
+{
+  "a": 5,
+  "b": 3
+}
+
+### ── Chatbot API ───────────────────────────────────────────────────────────
+
+### Chat
+POST http://localhost:8080/api/chat
+Content-Type: application/json
+
+{
+  "message": "Explain the difference between a class and an object in Kotlin.",
+  "history": [
+    {
+      "role": "user",
+      "content": "Keep it concise."
+    },
+    {
+      "role": "assistant",
+      "content": "I will keep it brief."
+    }
+  ]
+}
+
+###
+
+### Chat with search fallback
+POST http://localhost:8080/api/chat
+Content-Type: application/json
+
+{
+  "message": "search current Kotlin 2.0 release highlights"
+}
+
+### Send Message API
+POST http://localhost:8080/api/send-message
+Content-Type: application/json
+
+{
+  "message": "Explain Kotlin coroutines in simple terms.",
+  "history": [
+    {
+      "role": "user",
+      "content": "Keep it short."
+    }
+  ]
+}
+
+### ── Multimodal APIs ───────────────────────────────────────────────────────
+
+### Vision Status
+GET http://localhost:8080/api/vision/status
+
+###
+
+### Analyze Image
+POST http://localhost:8080/api/vision?prompt=Describe%20this%20image.
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="image"; filename="own_logo.png"
+Content-Type: image/png
+
+< src/main/resources/static/own_logo.png
+--boundary--
+
+###
+
+### Image Status
+GET http://localhost:8080/api/image/status
+
+###
+
+### Generate Image
+POST http://localhost:8080/api/image
+Content-Type: application/json
+
+{
+  "prompt": "A cinematic workspace with Kotlin code on a floating holographic screen"
+}
+
+### ── Users (Database) ───────────────────────────────────────────────────────
+
+### Get All Users
+GET http://localhost:8080/api/users
+
+###
+
+### Get User by ID
+GET http://localhost:8080/api/users/1
+
+###
+
+### Create User
+POST http://localhost:8080/api/users
+Content-Type: application/json
+
+{
+  "name": "Rohit",
+  "age": 30,
+  "email": "rohit@example.com"
+}
+
+###
+
+### Update User
+PUT http://localhost:8080/api/users/1
+Content-Type: application/json
+
+{
+  "name": "Ricky Updated",
+  "age": 31,
+  "email": "ricky.updated@example.com"
+}
+
+###
+
+### Delete User
+DELETE http://localhost:8080/api/users/1
+
+### ── MCP Smoke Check ───────────────────────────────────────────────────────
+
+### MCP Tool Registration Smoke Test
+GET http://localhost:8080/api/mcp/smoke
+
+### Raw MCP endpoint check (should not be called directly as plain GET)
+GET http://localhost:8080/mcp
+
+### ── External API (JSONPlaceholder) ─────────────────────────────────────────
+
+### Get All Posts (fetched from jsonplaceholder.typicode.com)
+GET http://localhost:8080/api/external/posts
+
+###
+
+### Get Post by ID
+GET http://localhost:8080/api/external/posts/1
+
+###
+
+### Get Comments for a Post
+GET http://localhost:8080/api/external/posts/1/comments
+
+###
+
+### Get Todo by ID
+GET http://localhost:8080/api/external/todos/1
+
+###
+
+### Get Todos by User ID
+GET http://localhost:8080/api/external/todos?userId=1
+
+###
+
+### Get Version by Language
+GET http://localhost:8080/api/external/versions/english
+
+###
+
+### Authentication (JWT) ───────────────────────────────────────────────────────
+
+### Authenticate User
+POST http://localhost:8080/api/external/user
+Content-Type: application/json
+
+{
+  "username": "mp12@mailnesia.com",
+  "password": "Primo400",
+  "locale": "en_US"
+}
+
+###
+
+### Get Accounts for User
+GET http://localhost:8080/api/external/accounts/00u11yg6k4ucqnKCS0h8?timestamp=1782117867574&lang=en_US
+token: <your-token>
+oktaToken: <your-okta-token>
+apiKey: <your-api-key>
+Origin: https://qa.wm.com
+User-Agent: My WM/7.6-dev/Dalvik/2.1.0 (Linux; U; Android 17; sdk_gphone16k_arm64 Build/CP21.260330.005)
+###
+
+
+

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ricky's SB Tool</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .logo svg { width: 48px; height: 48px; }
+
+    h1 {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin-bottom: 32px;
+    }
+
+    .field { margin-bottom: 18px; }
+
+    label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      color: #111827;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    input:focus {
+      border-color: #0f3460;
+      box-shadow: 0 0 0 3px rgba(15, 52, 96, 0.12);
+    }
+
+    .locale-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .locale-row label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: #374151;
+      cursor: pointer;
+    }
+
+    .locale-row input[type="radio"] { width: auto; }
+
+    button[type="submit"] {
+      width: 100%;
+      padding: 12px;
+      background: #0f3460;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    button[type="submit"]:hover:not(:disabled) { background: #16213e; }
+    button[type="submit"]:active:not(:disabled) { transform: scale(0.98); }
+    button[type="submit"]:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2.5px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Result panel ── */
+    #result {
+      margin-top: 24px;
+      border-radius: 10px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      font-size: 0.8125rem;
+      font-weight: 600;
+    }
+
+    #result.success .result-header { background: #dcfce7; color: #166534; }
+    #result.error   .result-header { background: #fee2e2; color: #991b1b; }
+
+    .result-body {
+      background: #f9fafb;
+      padding: 14px;
+      border: 1px solid #e5e7eb;
+      border-top: none;
+      border-radius: 0 0 10px 10px;
+    }
+
+    pre {
+      font-size: 0.78rem;
+      color: #374151;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+
+    .copy-btn {
+      background: none;
+      border: 1px solid currentColor;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      color: inherit;
+    }
+    .copy-btn:hover { opacity: 0.75; }
+
+    .action-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .action-row .button-link {
+      flex: 1;
+      text-align: center;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .action-row .button-link.secondary {
+      background: #0f3460;
+      color: #ffffff;
+      border: 1px solid #0f3460;
+      box-shadow: 0 8px 18px rgba(15, 52, 96, 0.18);
+      transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+    }
+
+    .action-row .button-link.secondary:hover {
+      background: #16213e;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(15, 52, 96, 0.24);
+    }
+
+  </style>
+</head>
+<body>
+  <div class="card">
+
+    <div class="logo">
+      <img src="/own_logo.png" alt="Logo" width="55" height="55" style="border-radius:12px;object-fit:contain;" />
+    </div>
+
+    <h1>Sign In</h1>
+    <br/>
+    <p class="subtitle">Ricky's SB Tool - Environment: QA2/QA3</p>
+
+    <form id="loginForm" novalidate>
+      <div class="field">
+        <label for="username">Username / Email</label>
+        <input id="username" type="email" placeholder="you@example.com" required autocomplete="username" />
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" placeholder="••••••••" required autocomplete="current-password" />
+      </div>
+
+      <div class="field">
+        <label>Locale</label>
+        <div class="locale-row">
+          <label><input type="radio" name="locale" value="en_US" checked /> English (en_US)</label>
+          <label><input type="radio" name="locale" value="fr_CA" /> French (fr_CA)</label>
+        </div>
+      </div>
+
+      <button type="submit" id="submitBtn">
+        <span class="spinner" id="spinner"></span>
+        <span id="btnText">Sign In</span>
+      </button>
+    </form>
+
+    <div class="action-row">
+      <a class="button-link secondary" href="/chatbot.html">Open Chat</a>
+    </div>
+
+    <div id="result">
+      <div class="result-header">
+        <span id="resultStatus"></span>
+        <button class="copy-btn" onclick="copyResult()">Copy</button>
+      </div>
+      <div class="result-body">
+        <pre id="resultJson"></pre>
+      </div>
+    </div>
+
+    <site-footer variant="light"></site-footer>
+
+  </div>
+
+  <script>
+    const form       = document.getElementById('loginForm');
+    const submitBtn  = document.getElementById('submitBtn');
+    const spinner    = document.getElementById('spinner');
+    const btnText    = document.getElementById('btnText');
+    const resultBox  = document.getElementById('result');
+    const resultJson = document.getElementById('resultJson');
+    const resultStatus = document.getElementById('resultStatus');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const locale   = document.querySelector('input[name="locale"]:checked').value;
+
+      if (!username || !password) return;
+
+      // Loading state
+      setLoading(true);
+      resultBox.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/external/user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, locale })
+        });
+
+        const data = await res.json();
+        var pretty = JSON.stringify(data, null, 2);
+
+        if (res.ok) {
+          resultBox.className = 'success';
+          resultStatus.textContent = `✓ ${res.status} ${res.statusText} — Authenticated`;
+          pretty = "Authentication successful.";
+          // Persist token and id from the nested authenticate payload
+          const authData = data?.data || {};
+          const accessToken = authData?.access_token || authData?.accessToken || authData?.token;
+          const userId = authData?.id;
+
+          if (accessToken) {
+            localStorage.setItem('access_token', accessToken);
+            localStorage.setItem('auth_token', accessToken);
+          }
+
+          if (userId) {
+            localStorage.setItem('user_id', userId);
+          }
+
+          localStorage.setItem('dashboard_user', username);
+          window.location.href = '/Dashboard.html';
+        } else {
+          resultBox.className = 'error';
+          resultStatus.textContent = `✗ ${res.status} ${res.statusText} — ${username} / ${password} / ${locale} / ${res.url}`;
+        }
+
+        resultJson.textContent = pretty;
+        resultBox.style.display = 'block';
+
+      } catch (err) {
+        resultBox.className = 'error';
+        resultStatus.textContent = '✗ Network error';
+        resultJson.textContent = err.message;
+        resultBox.style.display = 'block';
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    function setLoading(on) {
+      submitBtn.disabled    = on;
+      spinner.style.display = on ? 'block' : 'none';
+      btnText.textContent   = on ? 'Signing in…' : 'Sign In';
+    }
+
+    function copyResult() {
+      navigator.clipboard.writeText(resultJson.textContent)
+        .then(() => alert('Copied to clipboard'));
+    }
+  </script>
+  <script src="/site-footer.js"></script>
+</body>
+</html>

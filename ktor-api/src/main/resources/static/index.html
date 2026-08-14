@@ -1,0 +1,2529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ricky Khatri AI</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #111827 45%, #1d4ed8 100%);
+      color: #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .chat-shell {
+      width: min(100%, 1120px);
+      max-height: calc(100vh - 48px);
+      display: grid;
+      gap: 16px;
+      padding: 24px;
+      border-radius: 28px;
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      box-shadow: 0 24px 80px rgba(15, 23, 42, 0.40);
+      backdrop-filter: blur(18px);
+      overflow: auto;
+    }
+
+    .header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .eyebrow {
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #93c5fd;
+      margin-bottom: 8px;
+    }
+
+    .header h2 {
+      font-size: clamp(1.6rem, 2.5vw, 2.2rem);
+      line-height: 1.1;
+      color: #f8fafc;
+      margin: 0;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: rgba(226, 232, 240, 0.78);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      max-width: 58ch;
+    }
+
+    .session-panel {
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .session-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .session-panel-title {
+      font-size: 0.92rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #e2e8f0;
+    }
+
+    .session-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .session-item {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      background: rgba(255, 255, 255, 0.06);
+      color: #e5e7eb;
+      cursor: pointer;
+      max-width: 100%;
+      min-width: 0;
+    }
+
+    .session-item.active {
+      background: rgba(96, 165, 250, 0.22);
+      border-color: rgba(96, 165, 250, 0.34);
+      color: #eff6ff;
+    }
+
+    .session-item-name {
+      font-size: 0.9rem;
+      font-weight: 700;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 180px;
+    }
+
+    .session-item-count {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #bfdbfe;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 3px 8px;
+      border-radius: 999px;
+      flex: 0 0 auto;
+    }
+
+    .session-item.active .session-item-count {
+      background: rgba(255, 255, 255, 0.16);
+      color: #eff6ff;
+    }
+
+    .chat-log {
+      height: min(58vh, 620px);
+      padding: 18px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      overflow-y: auto;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .tool-card .button {
+      padding: 12px 16px;
+      border-radius: 10px;
+    }
+
+    .message {
+      width: fit-content;
+      max-width: min(88%, 760px);
+      height: auto;
+      padding: 12px 14px;
+      border-radius: 14px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      overflow: visible;
+      box-sizing: border-box;
+      min-width: 0;
+    }
+
+    .message.user {
+      margin-left: auto;
+      justify-self: end;
+      background: #60a5fa;
+      color: #0f172a;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message.bot {
+      margin-right: auto;
+      justify-self: start;
+      background: linear-gradient(135deg, rgba(224, 242, 254, 0.92) 0%, rgba(191, 219, 254, 0.88) 100%);
+      color: #0f172a;
+      border-bottom-left-radius: 4px;
+      padding-left: 18px;
+      padding-right: 16px;
+    }
+
+    .message.bot a {
+      color: #1d4ed8;
+      word-break: break-word;
+    }
+
+    .message.bot.html-message {
+      background: linear-gradient(135deg, rgba(224, 242, 254, 0.96) 0%, rgba(191, 219, 254, 0.92) 100%);
+      color: #0f172a;
+      white-space: normal;
+      padding-left: 18px;
+      padding-right: 16px;
+    }
+
+    .message.bot.html-message table,
+    .message.bot.html-message pre,
+    .message.bot.html-message blockquote {
+      max-width: 100%;
+    }
+
+    .message.bot.html-message code {
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    .message.html-message {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      display: block;
+      box-sizing: border-box;
+      white-space: normal;
+      overflow: visible;
+    }
+
+    .message.typing {
+      margin-right: auto;
+      background: rgba(255, 255, 255, 0.06);
+      color: #cbd5e1;
+      border-bottom-left-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 110px;
+    }
+
+    .typing-dots {
+      display: inline-flex;
+      gap: 5px;
+    }
+
+    .typing-dots span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #93c5fd;
+      animation: pulse 1.1s infinite ease-in-out;
+    }
+
+    .typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+    @keyframes pulse {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.45; }
+      40% { transform: translateY(-4px); opacity: 1; }
+    }
+
+    .composer {
+      margin-top: 16px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .suggestion-panel {
+      margin-top: 14px;
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .suggestion-panel-title {
+      font-size: 0.88rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      color: #e2e8f0;
+    }
+
+    .suggestion-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .suggestion-chip {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.06);
+      color: #e5e7eb;
+      border-radius: 999px;
+      padding: 10px 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      max-width: 100%;
+      min-width: 0;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .suggestion-chip:hover {
+      background: rgba(96, 165, 250, 0.18);
+      border-color: rgba(96, 165, 250, 0.36);
+    }
+
+    .composer input {
+      flex: 1 1 360px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.06);
+      color: #fff;
+      outline: none;
+      font-size: 1rem;
+    }
+
+    .composer input::placeholder { color: #94a3b8; }
+
+    .composer .mic-button {
+      min-width: 56px;
+      padding-inline: 0;
+      padding-block: 0;
+      font-size: 1.1rem;
+    }
+
+    .button.secondary.export-button {
+      min-width: 118px;
+    }
+
+    .composer .mic-button.listening {
+      background: #f97316;
+      color: #fff;
+    }
+
+    .mic-icon {
+      width: 22px;
+      height: 22px;
+      display: block;
+      object-fit: contain;
+      pointer-events: none;
+    }
+
+    .button {
+      border: 0;
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+    }
+
+    .button.primary { background: #60a5fa; color: #0f172a; }
+    .button.secondary { background: rgba(255,255,255,0.08); color: #e5e7eb; border: 1px solid rgba(255,255,255,0.12); }
+
+    .status {
+      margin-top: 12px;
+      color: #bfdbfe;
+      font-size: 0.92rem;
+      min-height: 1.2em;
+    }
+
+    .media-tools {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .tool-card {
+      border-radius: 16px;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: grid;
+      gap: 10px;
+    }
+
+    .tool-title {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #e2e8f0;
+    }
+
+    .tool-status {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      width: fit-content;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
+    }
+
+    .tool-status.online {
+      background: rgba(34, 197, 94, 0.18);
+      color: #86efac;
+    }
+
+    .tool-status.offline {
+      background: rgba(239, 68, 68, 0.18);
+      color: #fca5a5;
+    }
+
+    .tool-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .tool-card input[type="file"],
+    .tool-card input[type="text"] {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.06);
+      color: #fff;
+      outline: none;
+      font-size: 0.95rem;
+    }
+
+    .tool-card input[type="text"]::placeholder { color: #94a3b8; }
+
+    .tool-card .button {
+      padding: 12px 16px;
+      border-radius: 10px;
+    }
+
+    .code-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .code-editor {
+      width: 100%;
+      min-height: 180px;
+      resize: vertical;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.06);
+      color: #fff;
+      outline: none;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    .code-editor::placeholder {
+      color: #94a3b8;
+    }
+
+    .code-output {
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(2, 6, 23, 0.48);
+      color: #dbeafe;
+      min-height: 88px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .code-output.empty {
+      color: #94a3b8;
+    }
+
+    .message.media-image {
+      max-width: 420px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .message.media-image img {
+      width: 100%;
+      border-radius: 12px;
+      display: block;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .search-results-block {
+      display: grid;
+      gap: 8px;
+      overflow: hidden;
+      width: 100%;
+      min-width: 0;
+      padding-left: 4px;
+    }
+
+    .search-results-list {
+      margin: 0;
+      padding-left: 20px;
+      display: grid;
+      gap: 10px;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .search-result-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+      width: 100%;
+    }
+
+    .search-result-preview {
+      margin-top: 8px;
+    }
+
+    .search-result-preview .link-page-card {
+      padding: 10px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.32);
+    }
+
+    .search-result-preview .link-page-frame {
+      min-height: 260px;
+    }
+
+    .search-result-copy {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+      width: 100%;
+    }
+
+    .search-result-copy a {
+      color: #93c5fd;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      overflow-wrap: anywhere;
+      display: block;
+      width: 100%;
+    }
+
+    .search-result-copy a:hover {
+      color: #031b3a;
+    }
+
+    .search-result-url {
+      display: none;
+    }
+
+    .search-result-thumb {
+      width: 100%;
+      max-width: 280px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: block;
+    }
+
+    .chart-card {
+      width: 100%;
+      min-width: 0;
+      display: grid;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.36);
+      border: 1px solid rgba(15, 23, 42, 0.10);
+    }
+
+    .chart-card h5 {
+      font-size: 1rem;
+      line-height: 1.25;
+      color: #0f172a;
+      margin: 0;
+    }
+
+    .chart-card p {
+      color: rgba(15, 23, 42, 0.76);
+      font-size: 0.92rem;
+      margin: 0;
+    }
+
+    .chart-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      overflow: visible;
+    }
+
+    .chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 14px;
+      font-size: 0.9rem;
+      color: rgba(15, 23, 42, 0.82);
+    }
+
+    .chart-legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chart-legend-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      flex: 0 0 auto;
+    }
+
+    .chart-fallback {
+      margin: 0;
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.55);
+      border: 1px solid rgba(15, 23, 42, 0.10);
+      overflow: auto;
+    }
+
+    .link-page-card {
+      display: grid;
+      gap: 12px;
+      width: 100%;
+      min-width: 0;
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.44);
+      border: 1px solid rgba(15, 23, 42, 0.12);
+    }
+
+    .reply-with-preview {
+      display: grid;
+      gap: 12px;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .reply-text {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .link-page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .link-page-header h5 {
+      margin: 0;
+      color: #0f172a;
+      font-size: 1rem;
+      line-height: 1.2;
+    }
+
+    .link-page-header p {
+      margin: 4px 0 0;
+      font-size: 0.86rem;
+      color: rgba(15, 23, 42, 0.72);
+      overflow-wrap: anywhere;
+    }
+
+    .link-page-open {
+      flex: 0 0 auto;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(37, 99, 235, 0.12);
+      color: #1d4ed8;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .link-page-frame {
+      width: 100%;
+      min-height: 420px;
+      border: 0;
+      border-radius: 12px;
+      background: #fff;
+    }
+
+    .markdown-block {
+      display: grid;
+      gap: 10px;
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      padding-left: 4px;
+    }
+
+    .markdown-block h1,
+    .markdown-block h2,
+    .markdown-block h3,
+    .markdown-block h4 {
+      line-height: 1.2;
+      color: #0f172a;
+    }
+
+    .markdown-block p {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .markdown-block ul,
+    .markdown-block ol {
+      margin: 0;
+      padding-left: 22px;
+      display: grid;
+      gap: 6px;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .markdown-block blockquote {
+      margin: 0;
+      padding-left: 14px;
+      border-left: 3px solid rgba(29, 78, 216, 0.35);
+      color: rgba(15, 23, 42, 0.9);
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .code-block {
+      display: grid;
+      gap: 0;
+      width: 100%;
+      min-width: 0;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(15, 23, 42, 0.14);
+      background: rgba(15, 23, 42, 0.94);
+    }
+
+    .code-block-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 14px;
+      background: rgba(15, 23, 42, 0.22);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .code-block-language {
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #93c5fd;
+    }
+
+    .code-block pre,
+    .chart-fallback pre {
+      margin: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 14px;
+      white-space: pre;
+    }
+
+    .code-block code,
+    .chart-fallback code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: #e2e8f0;
+      white-space: pre;
+      overflow-wrap: normal;
+      word-break: normal;
+    }
+
+    .markdown-table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      border-radius: 12px;
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      background: rgba(255, 255, 255, 0.28);
+    }
+
+    .markdown-table {
+      width: 100%;
+      min-width: 520px;
+      border-collapse: collapse;
+      color: #0f172a;
+    }
+
+    .markdown-table th,
+    .markdown-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.12);
+      border-right: 1px solid rgba(15, 23, 42, 0.08);
+      vertical-align: top;
+      text-align: left;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .markdown-table th:last-child,
+    .markdown-table td:last-child {
+      border-right: 0;
+    }
+
+    .markdown-table thead th {
+      background: rgba(191, 219, 254, 0.45);
+      font-weight: 800;
+    }
+
+    .markdown-table {
+      table-layout: fixed;
+    }
+
+    .markdown-table tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    @media (max-width: 640px) {
+      .chat-shell { padding: 20px; }
+      .chat-log { height: 300px; }
+      .message { max-width: 92%; }
+      .media-tools { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="chat-shell">
+    <div class="header">
+      <div>
+        <div class="eyebrow">Ricky Khatri AI</div>
+        <h2>Ricky Khatri AI</h2>
+        <p class="subtitle"></p>
+      </div>
+      <a class="button secondary" href="/codelab.html">Open Code Lab</a>
+    </div>
+
+    <div class="session-panel" aria-label="Chat sessions">
+      <div class="session-panel-header">
+        <div class="session-panel-title">Sessions</div>
+        <button id="newSessionBtn" class="button secondary" type="button">New chat</button>
+      </div>
+      <div id="sessionList" class="session-list"></div>
+    </div>
+
+    <section id="chatLog" class="chat-log" aria-live="polite"></section>
+
+    <div class="composer">
+      <input id="chatInput" type="text" placeholder="Type your message and press Send..." />
+      <button id="micBtn" class="button secondary mic-button" type="button" aria-label="Use speech to text">
+        <img class="mic-icon" src="/mic.png" alt="" aria-hidden="true" />
+      </button>
+      <button id="exportPdfBtn" class="button secondary export-button" type="button">Export PDF</button>
+      <button id="sendBtn" class="button primary" type="button">Send</button>
+    </div>
+
+    <div class="suggestion-panel" aria-label="Suggested prompts">
+      <div class="suggestion-panel-title">Try these prompts</div>
+      <div id="suggestionList" class="suggestion-list"></div>
+    </div>
+
+    <div class="media-tools" aria-label="Image tools">
+      <div class="tool-card">
+        <div class="tool-title">Image understanding</div>
+        <div id="visionStatus" class="tool-status">Checking local vision service...</div>
+        <input id="visionPromptInput" type="text" placeholder="Ask a question about the image" />
+        <input id="visionInput" type="file" accept="image/*" />
+        <div class="tool-row">
+          <button id="visionBtn" class="button secondary" type="button">Analyze Image</button>
+        </div>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-title">Image generation</div>
+        <div id="imageStatus" class="tool-status">Checking local image service...</div>
+        <input id="imagePromptInput" type="text" placeholder="Describe the image to generate" />
+        <div class="tool-row">
+          <button id="imageBtn" class="button secondary" type="button">Generate Image</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="status" class="status"></div>
+
+    <site-footer></site-footer>
+  </main>
+
+  <script>
+    const chatLog = document.getElementById('chatLog');
+    const chatInput = document.getElementById('chatInput');
+    const micBtn = document.getElementById('micBtn');
+      const exportPdfBtn = document.getElementById('exportPdfBtn');
+    const sendBtn = document.getElementById('sendBtn');
+    const visionBtn = document.getElementById('visionBtn');
+    const imageBtn = document.getElementById('imageBtn');
+    const visionInput = document.getElementById('visionInput');
+    const visionPromptInput = document.getElementById('visionPromptInput');
+    const imagePromptInput = document.getElementById('imagePromptInput');
+    const visionStatus = document.getElementById('visionStatus');
+    const imageStatus = document.getElementById('imageStatus');
+    const statusBox = document.getElementById('status');
+    const sessionStorageKey = 'chatbot-r-chat-sessions';
+    const activeSessionStorageKey = 'chatbot-r-active-session-id';
+    const legacyConversationStorageKey = 'chatbot-r-conversation-history';
+    const newSessionBtn = document.getElementById('newSessionBtn');
+    const sessionList = document.getElementById('sessionList');
+    const suggestionList = document.getElementById('suggestionList');
+    let pdfObjectUrl = '';
+    const suggestedPrompts = [
+      { label: 'Show Kmm website', value: 'show me Kmm website' },
+      { label: 'Open ChatGPT', value: 'open chatgpt.com' },
+      { label: 'Load Udemy', value: 'load udemy.com' },
+      { label: 'Kotlin Playground', value: 'show me Kotlin Playground website' },
+      { label: 'Generate Kotlin', value: 'generate Kotlin code to reverse a list' },
+      { label: 'Show AAPL chart', value: 'load stock chart for AAPL' }
+    ];
+    let chatSessions = loadChatSessions();
+    let activeSessionId = loadActiveSessionId();
+    let conversationHistory = getActiveSessionHistory();
+    let typingIndicator = null;
+    let recognition = null;
+    let isListening = false;
+    let recognitionSupported = false;
+
+    ensureActiveSession();
+    renderSessionList();
+    renderActiveSession();
+    renderSuggestionList();
+    installInspectDeterrents();
+
+    initializeSpeechRecognition();
+    refreshMultimodalStatus();
+
+    sendBtn.addEventListener('click', sendMessage);
+    exportPdfBtn.addEventListener('click', exportConversationAsPdf);
+    newSessionBtn.addEventListener('click', createNewSession);
+    micBtn.addEventListener('click', toggleSpeechRecognition);
+    visionBtn.addEventListener('click', analyzeImage);
+    imageBtn.addEventListener('click', generateImage);
+    visionInput.addEventListener('change', showSelectedVisionImage);
+    chatInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        sendMessage();
+      }
+    });
+
+    function initializeSpeechRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      if (!SpeechRecognition) {
+        micBtn.disabled = true;
+        micBtn.title = 'Speech recognition is not supported in this browser.';
+        setSpeechStatus('Speech-to-text is not supported in this browser.');
+        return;
+      }
+
+      recognitionSupported = true;
+      recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = true;
+      recognition.continuous = false;
+
+      recognition.addEventListener('result', (event) => {
+        let transcript = '';
+
+        for (let index = event.resultIndex; index < event.results.length; index += 1) {
+          transcript += event.results[index][0].transcript;
+        }
+
+        chatInput.value = transcript.trim();
+      });
+
+      recognition.addEventListener('start', () => {
+        isListening = true;
+        micBtn.classList.add('listening');
+        micBtn.setAttribute('aria-pressed', 'true');
+        setSpeechStatus('Listening...');
+      });
+
+      recognition.addEventListener('end', () => {
+        isListening = false;
+        micBtn.classList.remove('listening');
+        micBtn.setAttribute('aria-pressed', 'false');
+        if (statusBox.textContent === 'Listening...') {
+          setSpeechStatus('Speech capture ended.');
+        }
+      });
+
+      recognition.addEventListener('error', (event) => {
+        isListening = false;
+        micBtn.classList.remove('listening');
+        micBtn.setAttribute('aria-pressed', 'false');
+        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+          micBtn.title = 'Allow microphone access in your browser settings and try again.';
+          setSpeechStatus('Microphone access was denied. Allow microphone access in the browser and try again.');
+          return;
+        }
+
+        if (event.error === 'no-speech') {
+          setSpeechStatus('No speech detected. Try speaking a little louder and retry.');
+          return;
+        }
+
+        setSpeechStatus('Speech recognition failed.');
+      });
+    }
+
+    function renderSuggestionList() {
+      suggestionList.innerHTML = '';
+
+      suggestedPrompts.forEach((prompt) => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'suggestion-chip';
+        chip.textContent = prompt.label;
+        chip.addEventListener('click', () => {
+          chatInput.value = prompt.value;
+          sendMessage();
+        });
+        suggestionList.appendChild(chip);
+      });
+    }
+
+    function installInspectDeterrents() {
+      document.addEventListener('contextmenu', (event) => {
+        event.preventDefault();
+      });
+
+      document.addEventListener('keydown', (event) => {
+        const key = String(event.key || '').toLowerCase();
+        const isInspectShortcut =
+          key === 'f12' ||
+          (event.ctrlKey && event.shiftKey && ['i', 'j', 'c'].includes(key)) ||
+          (event.ctrlKey && key === 'u') ||
+          (event.metaKey && event.altKey && ['i', 'j', 'c'].includes(key));
+
+        if (isInspectShortcut) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }, true);
+    }
+
+    function toggleSpeechRecognition() {
+      if (!recognitionSupported || !recognition) return;
+
+      if (isListening) {
+        recognition.stop();
+        return;
+      }
+
+      chatInput.focus();
+      micBtn.title = 'Speech-to-text is active when microphone access is allowed.';
+      setSpeechStatus('Requesting microphone access...');
+
+      try {
+        recognition.start();
+      } catch (error) {
+        setSpeechStatus('Unable to start speech recognition. Check microphone permission in the browser.');
+      }
+    }
+
+    function setSpeechStatus(message) {
+      statusBox.textContent = message;
+    }
+
+    async function requestChatReply(message) {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message,
+          history: conversationHistory.slice(-12)
+        })
+      });
+
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload?.reply || `Request failed with status ${response.status}`);
+      }
+
+      return payload;
+    }
+
+    async function sendMessage() {
+      const message = chatInput.value.trim();
+      if (!message) return;
+
+      const stockChartRequest = extractStockChartRequest(message);
+      if (stockChartRequest) {
+        await loadStockMarketChart(message, stockChartRequest);
+        return;
+      }
+
+      const historyForRequest = conversationHistory.slice(-12);
+
+      if (recognitionSupported && isListening) {
+        recognition.stop();
+      }
+
+      appendMessage('user', message);
+      chatInput.value = '';
+      showTypingIndicator();
+      statusBox.textContent = 'Thinking...';
+      sendBtn.disabled = true;
+
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message, history: historyForRequest })
+        });
+
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload?.reply || `Request failed with status ${response.status}`);
+        }
+
+        recordConversationTurn('user', message);
+        recordConversationTurn('assistant', payload.reply || 'No reply returned.');
+        appendChatReply('bot', payload.reply || 'No reply returned.');
+        hideTypingIndicator();
+        statusBox.textContent = '';
+      } catch (error) {
+        hideTypingIndicator();
+        appendChatReply('bot', `Error: ${error.message}`);
+        statusBox.textContent = 'Unable to reach chatbot service.';
+      } finally {
+        sendBtn.disabled = false;
+        chatLog.scrollTop = chatLog.scrollHeight;
+      }
+    }
+
+    async function analyzeImage() {
+      const file = visionInput.files?.[0];
+      if (!file) {
+        statusBox.textContent = 'Choose an image first.';
+        return;
+      }
+
+      const prompt = visionPromptInput.value.trim() || 'Describe this image.';
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('prompt', prompt);
+
+      appendMessage('user', `Analyze image: ${file.name}`);
+      showTypingIndicator();
+      statusBox.textContent = 'Analyzing image...';
+      visionBtn.disabled = true;
+
+      try {
+        const response = await fetch('/api/vision', {
+          method: 'POST',
+          body: formData
+        });
+
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload?.reply || `Request failed with status ${response.status}`);
+        }
+
+        appendChatReply('bot', payload.reply || 'No analysis returned.');
+        hideTypingIndicator();
+        statusBox.textContent = '';
+      } catch (error) {
+        hideTypingIndicator();
+        appendChatReply('bot', `Error: ${error.message}`);
+        statusBox.textContent = 'Unable to analyze the image.';
+      } finally {
+        visionBtn.disabled = false;
+        chatLog.scrollTop = chatLog.scrollHeight;
+      }
+    }
+
+    function showSelectedVisionImage() {
+      const file = visionInput.files?.[0];
+      if (!file) {
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        appendImageMessage('user', reader.result, `Selected image: ${file.name}`);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function generateImage() {
+      const prompt = imagePromptInput.value.trim();
+      if (!prompt) {
+        statusBox.textContent = 'Enter a prompt to generate an image.';
+        return;
+      }
+
+      appendMessage('user', `Generate image: ${prompt}`);
+      showTypingIndicator();
+      statusBox.textContent = 'Generating image...';
+      imageBtn.disabled = true;
+
+      try {
+        const response = await fetch('/api/image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt })
+        });
+
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload?.reply || `Request failed with status ${response.status}`);
+        }
+
+        hideTypingIndicator();
+        statusBox.textContent = '';
+        if (payload.imageDataUrl) {
+          appendImageMessage('bot', payload.imageDataUrl, payload.reply || 'Generated image');
+        } else {
+          appendChatReply('bot', payload.reply || 'No image returned.');
+        }
+      } catch (error) {
+        hideTypingIndicator();
+        appendChatReply('bot', `Error: ${error.message}`);
+        statusBox.textContent = 'Unable to generate the image.';
+      } finally {
+        imageBtn.disabled = false;
+        chatLog.scrollTop = chatLog.scrollHeight;
+      }
+    }
+
+    async function loadStockMarketChart(message, stockChartRequest) {
+      appendMessage('user', message);
+      showTypingIndicator();
+      statusBox.textContent = `Searching Google for ${stockChartRequest.symbol}...`;
+      sendBtn.disabled = true;
+
+      try {
+        const query = new URLSearchParams({
+          symbol: stockChartRequest.symbol,
+          range: stockChartRequest.range,
+          interval: stockChartRequest.interval
+        });
+
+        const response = await fetch(`/api/stocks/chart?${query.toString()}`);
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload?.reply || `Request failed with status ${response.status}`);
+        }
+
+        const replyMarkdown = payload.reply || `Google search completed for ${stockChartRequest.symbol}.`;
+        recordConversationTurn('user', message);
+        recordConversationTurn('assistant', replyMarkdown);
+        appendChatReply('bot', replyMarkdown);
+        hideTypingIndicator();
+        statusBox.textContent = '';
+      } catch (error) {
+        hideTypingIndicator();
+        appendChatReply('bot', `Error: ${error.message}`);
+        statusBox.textContent = 'Unable to load stock chart.';
+      } finally {
+        sendBtn.disabled = false;
+        chatLog.scrollTop = chatLog.scrollHeight;
+      }
+    }
+
+
+    async function refreshMultimodalStatus() {
+      await Promise.all([
+        updateServiceStatus('/api/vision/status', visionStatus),
+        updateServiceStatus('/api/image/status', imageStatus)
+      ]);
+    }
+
+    async function updateServiceStatus(url, statusElement) {
+      try {
+        const response = await fetch(url);
+        const payload = await response.json();
+        const available = Boolean(payload?.available);
+        statusElement.textContent = available ? 'Online' : 'Offline';
+        statusElement.classList.toggle('online', available);
+        statusElement.classList.toggle('offline', !available);
+      } catch (error) {
+        statusElement.textContent = 'Offline';
+        statusElement.classList.remove('online');
+        statusElement.classList.add('offline');
+      }
+    }
+
+    function showTypingIndicator() {
+      if (typingIndicator) return;
+
+      typingIndicator = document.createElement('div');
+      typingIndicator.className = 'message typing';
+      typingIndicator.innerHTML = '<span>Thinking</span><span class="typing-dots" aria-hidden="true"><span></span><span></span><span></span></span>';
+      chatLog.appendChild(typingIndicator);
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    function hideTypingIndicator() {
+      if (!typingIndicator) return;
+
+      typingIndicator.remove();
+      typingIndicator = null;
+    }
+
+    function appendMessage(role, text) {
+      const bubble = document.createElement('div');
+      bubble.className = `message ${role}`;
+      bubble.textContent = text;
+      chatLog.appendChild(bubble);
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    function loadChatSessions() {
+      try {
+        const rawSessions = localStorage.getItem(sessionStorageKey);
+        if (rawSessions) {
+          const parsedSessions = JSON.parse(rawSessions);
+          if (Array.isArray(parsedSessions)) {
+            return parsedSessions
+              .filter((session) => session && typeof session.id === 'string')
+              .map((session, index) => ({
+                id: session.id,
+                title: typeof session.title === 'string' && session.title.trim() ? session.title.trim() : `Chat ${index + 1}`,
+                history: Array.isArray(session.history)
+                  ? session.history.filter((entry) => entry && typeof entry.role === 'string' && typeof entry.content === 'string')
+                  : [],
+                createdAt: session.createdAt || new Date().toISOString(),
+                updatedAt: session.updatedAt || new Date().toISOString()
+              }));
+          }
+        }
+
+        const legacyHistory = loadLegacyConversationHistory();
+        if (legacyHistory.length) {
+          const legacySession = createSession('Chat 1');
+          legacySession.history = legacyHistory;
+          legacySession.title = deriveSessionTitle(legacyHistory) || legacySession.title;
+          legacySession.updatedAt = new Date().toISOString();
+          return [legacySession];
+        }
+
+        return [createSession('Chat 1')];
+      } catch (error) {
+        return [createSession('Chat 1')];
+      }
+    }
+
+    function loadLegacyConversationHistory() {
+      try {
+        const rawHistory = localStorage.getItem(legacyConversationStorageKey);
+        if (!rawHistory) {
+          return [];
+        }
+
+        const parsedHistory = JSON.parse(rawHistory);
+        if (!Array.isArray(parsedHistory)) {
+          return [];
+        }
+
+        return parsedHistory
+          .filter((entry) => entry && typeof entry.role === 'string' && typeof entry.content === 'string')
+          .slice(-24);
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function saveChatSessions() {
+      try {
+        localStorage.setItem(sessionStorageKey, JSON.stringify(chatSessions.map((session) => ({
+          ...session,
+          history: session.history.slice(-24)
+        }))));
+        localStorage.setItem(activeSessionStorageKey, activeSessionId);
+      } catch (error) {
+        // Ignore storage failures.
+      }
+    }
+
+    function loadActiveSessionId() {
+      try {
+        const storedSessionId = localStorage.getItem(activeSessionStorageKey);
+        if (storedSessionId) {
+          return storedSessionId;
+        }
+      } catch (error) {
+        // Ignore storage failures.
+      }
+
+      return chatSessions[0]?.id || '';
+    }
+
+    function createSession(defaultTitle) {
+      const timestamp = Date.now();
+      return {
+        id: `session-${timestamp}-${Math.random().toString(36).slice(2, 8)}`,
+        title: defaultTitle || 'New chat',
+        history: [],
+        createdAt: new Date(timestamp).toISOString(),
+        updatedAt: new Date(timestamp).toISOString()
+      };
+    }
+
+    function ensureActiveSession() {
+      if (chatSessions.length === 0) {
+        const initialSession = createSession('Chat 1');
+        chatSessions = [initialSession];
+        activeSessionId = initialSession.id;
+        conversationHistory = initialSession.history;
+        saveChatSessions();
+        return;
+      }
+
+      const activeSession = getActiveSession();
+      if (!activeSession) {
+        activeSessionId = chatSessions[0].id;
+      }
+
+      conversationHistory = getActiveSessionHistory();
+      saveChatSessions();
+    }
+
+    function getActiveSession() {
+      return chatSessions.find((session) => session.id === activeSessionId) || chatSessions[0] || null;
+    }
+
+    function getActiveSessionHistory() {
+      return getActiveSession()?.history || [];
+    }
+
+    function setActiveSession(sessionId) {
+      const session = chatSessions.find((entry) => entry.id === sessionId);
+      if (!session) {
+        return;
+      }
+
+      activeSessionId = session.id;
+      conversationHistory = session.history;
+      saveChatSessions();
+      renderSessionList();
+      renderActiveSession();
+    }
+
+    function createNewSession() {
+      const session = createSession('New chat');
+      chatSessions.unshift(session);
+      activeSessionId = session.id;
+      conversationHistory = session.history;
+      saveChatSessions();
+      renderSessionList();
+      renderActiveSession();
+      chatInput.focus();
+    }
+
+    function recordConversationTurn(role, content) {
+      const session = getActiveSession();
+      if (!session) {
+        return;
+      }
+
+      session.history.push({ role, content });
+      session.history = session.history.slice(-24);
+      session.updatedAt = new Date().toISOString();
+
+      if (role === 'user') {
+        session.title = session.title === 'New chat' || session.title === 'Chat 1'
+          ? deriveSessionTitle(session.history)
+          : session.title;
+      }
+
+      conversationHistory = session.history;
+      saveChatSessions();
+      renderSessionList();
+    }
+
+    function renderSessionList() {
+      sessionList.innerHTML = '';
+
+      chatSessions.forEach((session) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `session-item${session.id === activeSessionId ? ' active' : ''}`;
+        button.setAttribute('aria-pressed', String(session.id === activeSessionId));
+        button.title = session.title;
+
+        const title = document.createElement('span');
+        title.className = 'session-item-title';
+        title.textContent = session.title;
+
+        const count = document.createElement('span');
+        count.className = 'session-item-count';
+        count.textContent = `${session.history.length} msg`;
+
+        button.appendChild(title);
+        button.appendChild(count);
+        button.addEventListener('click', () => setActiveSession(session.id));
+        sessionList.appendChild(button);
+      });
+    }
+
+    function renderActiveSession() {
+      chatLog.innerHTML = '';
+      const history = getActiveSessionHistory();
+
+      if (history.length) {
+        renderConversationHistory(history);
+      } else {
+        appendMessage('bot', 'Hello. I am ready to help.');
+      }
+    }
+
+    function deriveSessionTitle(history) {
+      const firstUserMessage = history.find((entry) => entry.role === 'user' && entry.content.trim());
+      if (!firstUserMessage) {
+        return 'New chat';
+      }
+
+      return firstUserMessage.content.trim().slice(0, 32) || 'New chat';
+    }
+
+    function renderConversationHistory(history) {
+      history.forEach((entry) => {
+        if (entry.role === 'assistant' || entry.role === 'bot') {
+          appendChatReply('bot', entry.content);
+        } else {
+          appendMessage('user', entry.content);
+        }
+      });
+    }
+
+    function appendChatReply(role, content) {
+      const formattedContent = formatReplyContent(content);
+
+      if (formattedContent.isHtml) {
+        appendHtmlMessage(role, formattedContent.html);
+        return;
+      }
+
+      if (looksLikeHtml(content)) {
+        appendHtmlMessage(role, content);
+        return;
+      }
+
+      const directPageUrl = extractDirectPageUrl(content);
+      if (directPageUrl) {
+        appendHtmlMessage(role, renderTextWithPagePreview(content, directPageUrl));
+        return;
+      }
+
+      appendMessage(role, content);
+    }
+
+    function formatReplyContent(content) {
+      const trimmed = (content || '').trim();
+      if (!/^(Google|DuckDuckGo) results for:/i.test(trimmed)) {
+        if (looksLikeMarkdown(trimmed)) {
+          return { isHtml: true, html: markdownToHtml(trimmed) };
+        }
+
+        return { isHtml: false, html: '' };
+      }
+
+      const html = buildSearchResultsHtml(trimmed);
+      return html ? { isHtml: true, html } : { isHtml: false, html: '' };
+    }
+
+    function buildSearchResultsHtml(content) {
+      const lines = content.split(/\r?\n/).map((line) => line.trim());
+      const title = lines[0] || 'Search results';
+      const items = [];
+      let currentItem = null;
+
+      for (let index = 1; index < lines.length; index += 1) {
+        const line = lines[index];
+
+        if (!line) {
+          continue;
+        }
+
+        const numberedMatch = line.match(/^(\d+)\.\s*(.+)$/);
+        if (numberedMatch) {
+          if (currentItem) {
+            items.push(currentItem);
+          }
+
+          currentItem = parseSearchResultLine(numberedMatch[2].trim());
+          continue;
+        }
+
+        if (!currentItem) {
+          continue;
+        }
+
+        if (!currentItem.url && looksLikeUrl(line)) {
+          currentItem.url = normalizeSearchUrl(line);
+        } else if (!currentItem.title) {
+          currentItem.title = line;
+        }
+      }
+
+      if (currentItem) {
+        items.push(currentItem);
+      }
+
+      if (!items.length) {
+        return '';
+      }
+
+      return `
+        <div class="search-results-block">
+          <ol class="search-results-list">
+            ${items.map((item) => {
+              const safeTitle = escapeHtml(item.title || 'Result');
+              const safeUrl = escapeHtml(item.url || '#');
+              const link = item.url ? `<a href="${safeUrl}">${safeTitle}</a>` : safeTitle;
+              const imagePreview = isImageUrl(item.url)
+                ? `<img class="search-result-thumb" src="${safeUrl}" alt="${safeTitle}" loading="lazy" />`
+                : '';
+              const pagePreview = item.url && !isImageUrl(item.url)
+                ? `<div class="search-result-preview">${renderLinkPagePreview(item.url)}</div>`
+                : '';
+
+              return `<li><div class="search-result-item">${imagePreview}<div class="search-result-copy">${link}</div>${pagePreview}</div></li>`;
+            }).join('')}
+          </ol>
+        </div>
+      `.trim();
+    }
+
+    function parseSearchResultLine(line) {
+      const markdownLinkMatch = line.match(/^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/i);
+      if (markdownLinkMatch) {
+        return {
+          title: markdownLinkMatch[1].trim(),
+          url: normalizeSearchUrl(markdownLinkMatch[2].trim())
+        };
+      }
+
+      const inlineUrlMatch = line.match(/^(.*?)\s*((?:https?:\/\/|\/\/|www\.)[^\s<>"']+)\s*$/i);
+      if (inlineUrlMatch) {
+        return {
+          title: inlineUrlMatch[1].trim() || 'Result',
+          url: normalizeSearchUrl(inlineUrlMatch[2].trim())
+        };
+      }
+
+      return {
+        title: line.trim(),
+        url: ''
+      };
+    }
+
+    function looksLikeUrl(value) {
+      return /^(https?:\/\/|\/\/|www\.)/i.test(value);
+    }
+
+    function normalizeSearchUrl(value) {
+      const normalized = value.startsWith('//') ? `https:${value}` : value;
+
+      try {
+        const parsedUrl = new URL(normalized);
+        if (parsedUrl.hostname.includes('duckduckgo.com')) {
+          const redirectTarget = parsedUrl.searchParams.get('uddg');
+          if (redirectTarget) {
+            return decodeURIComponent(redirectTarget);
+          }
+        }
+      } catch (error) {
+        return normalized;
+      }
+
+      return normalized;
+    }
+
+    function isImageUrl(value) {
+      if (!value) {
+        return false;
+      }
+
+      return /\.(png|jpg|jpeg|gif|webp|bmp|svg)(\?|#|$)/i.test(value);
+    }
+
+    function extractDirectPageUrl(value) {
+      const text = String(value || '');
+
+      const markdownLinkMatch = text.match(/\[[^\]]+\]\((https?:\/\/[^\s)]+)\)/i);
+      if (markdownLinkMatch) {
+        return normalizeSearchUrl(markdownLinkMatch[1]);
+      }
+
+      const match = text.match(/(?:https?:\/\/|\/\/|www\.)[^\s<>"\]\)]+/i);
+      if (!match) {
+        return '';
+      }
+
+      return normalizeSearchUrl(cleanExtractedUrl(match[0]));
+    }
+
+    function cleanExtractedUrl(value) {
+      return String(value || '').replace(/[.,;:!?]+$/g, '').trim();
+    }
+
+    function looksLikePageUrl(value) {
+      const normalized = (value || '').trim();
+      return looksLikeUrl(normalized) && !/\s/.test(normalized);
+    }
+
+    function renderTextWithPagePreview(content, url) {
+      const safeText = escapeHtml(content).replace(/\n/g, '<br>');
+      return `
+        <div class="reply-with-preview">
+          <div class="reply-text">${safeText}</div>
+          ${renderLinkPagePreview(url)}
+        </div>
+      `.trim();
+    }
+
+    function renderLinkPagePreview(url) {
+      const resolvedUrl = normalizeSearchUrl(url);
+      const safeUrl = escapeHtml(resolvedUrl);
+
+      return `
+        <div class="link-page-card">
+          <div class="link-page-header">
+            <div>
+              <h5>Web Page Preview</h5>
+              <p>${escapeHtml(resolvedUrl)}</p>
+            </div>
+            <a class="link-page-open" href="${safeUrl}" target="_blank" rel="noopener noreferrer">Open</a>
+          </div>
+          <iframe
+            class="link-page-frame"
+            src="${safeUrl}"
+            loading="lazy"
+            referrerpolicy="no-referrer"
+            sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
+            title="Web page preview"
+          ></iframe>
+        </div>
+      `.trim();
+    }
+
+    function looksLikeMarkdown(value) {
+      return /\|.*\|/.test(value) || /(^|\n)\s{0,3}#{1,6}\s+/.test(value) || /\*\*[^*]+\*\*/.test(value) || /(^|\n)\s*[-*+]\s+/.test(value);
+    }
+
+    function markdownToHtml(content) {
+      const lines = content.split(/\r?\n/);
+      const blocks = [];
+      let index = 0;
+
+      while (index < lines.length) {
+        const currentLine = lines[index].trim();
+
+        if (!currentLine) {
+          index += 1;
+          continue;
+        }
+
+        if (/^```/.test(currentLine)) {
+          const fenceMatch = currentLine.match(/^```\s*([\w-]+)?\s*$/);
+          const fenceLanguage = (fenceMatch?.[1] || '').toLowerCase();
+          const fencedLines = [];
+          index += 1;
+
+          while (index < lines.length && !/^```\s*$/.test(lines[index].trim())) {
+            fencedLines.push(lines[index]);
+            index += 1;
+          }
+
+          if (index < lines.length) {
+            index += 1;
+          }
+
+          if (fenceLanguage === 'chart' || fenceLanguage === 'charts' || fenceLanguage === 'graph') {
+            blocks.push(renderChartBlock(fencedLines.join('\n')));
+          } else {
+            blocks.push(renderCodeBlock(fencedLines.join('\n'), fenceLanguage));
+          }
+
+          continue;
+        }
+
+        if (isMarkdownTableSeparator(lines[index + 1] || '')) {
+          const table = parseMarkdownTable(lines, index);
+          if (table.html) {
+            blocks.push(table.html);
+            if (table.chartHtml) {
+              blocks.push(table.chartHtml);
+            }
+            index = table.nextIndex;
+            continue;
+          }
+        }
+
+        if (/^#{1,6}\s+/.test(currentLine)) {
+          const headingLevel = Math.min(currentLine.match(/^#+/)?.[0].length || 1, 4);
+          const headingText = currentLine.replace(/^#{1,6}\s+/, '').trim();
+          blocks.push(`<h${headingLevel}>${formatInlineMarkdown(headingText)}</h${headingLevel}>`);
+          index += 1;
+          continue;
+        }
+
+        if (/^>\s+/.test(currentLine)) {
+          const quoteLines = [];
+          while (index < lines.length && /^>\s+/.test(lines[index].trim())) {
+            quoteLines.push(lines[index].trim().replace(/^>\s+/, ''));
+            index += 1;
+          }
+          blocks.push(`<blockquote>${quoteLines.map((line) => formatInlineMarkdown(line)).join('<br>')}</blockquote>`);
+          continue;
+        }
+
+        if (/^([-*+]|\d+)\s+/.test(currentLine)) {
+          const ordered = /^\d+\./.test(currentLine);
+          const listItems = [];
+
+          while (index < lines.length) {
+            const listLine = lines[index].trim();
+            if (!listLine) break;
+            if (ordered ? !/^\d+\.\s+/.test(listLine) : !/^[-*+]\s+/.test(listLine)) break;
+
+            listItems.push(listLine.replace(/^(?:[-*+]|\d+\.)\s+/, '').trim());
+            index += 1;
+          }
+
+          const listTag = ordered ? 'ol' : 'ul';
+          blocks.push(`<${listTag}>${listItems.map((item) => `<li>${formatInlineMarkdown(item)}</li>`).join('')}</${listTag}>`);
+          continue;
+        }
+
+        const paragraphLines = [];
+        while (index < lines.length) {
+          const paragraphLine = lines[index].trim();
+          if (!paragraphLine) break;
+          if (/^#{1,6}\s+/.test(paragraphLine) || /^>\s+/.test(paragraphLine) || /^([-*+]|\d+)\s+/.test(paragraphLine) || isMarkdownTableSeparator(lines[index + 1] || '')) {
+            break;
+          }
+          paragraphLines.push(paragraphLine);
+          index += 1;
+        }
+
+        if (paragraphLines.length) {
+          blocks.push(`<p>${paragraphLines.map((line) => formatInlineMarkdown(line)).join('<br>')}</p>`);
+        } else {
+          blocks.push(`<p>${formatInlineMarkdown(currentLine)}</p>`);
+          index += 1;
+        }
+      }
+
+      return `<div class="markdown-block">${blocks.join('')}</div>`;
+    }
+
+    function renderChartBlock(rawValue) {
+      const spec = parseChartSpecification(rawValue);
+      if (!spec) {
+        return renderCodeBlock(rawValue, 'chart');
+      }
+
+      const chartHtml = buildChartHtml(spec);
+      return chartHtml || renderCodeBlock(rawValue, 'chart');
+    }
+
+    function renderCodeBlock(rawValue, language) {
+      const normalizedLanguage = (language || '').trim();
+      const label = normalizedLanguage ? normalizedLanguage.toUpperCase() : 'CODE';
+      return `
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-block-language">${escapeHtml(label)}</span>
+          </div>
+          <pre><code>${escapeHtml(rawValue)}</code></pre>
+        </div>
+      `.trim();
+    }
+
+    function parseChartSpecification(rawValue) {
+      const trimmed = (rawValue || '').trim();
+      if (!trimmed) {
+        return null;
+      }
+
+      try {
+        const parsed = JSON.parse(trimmed);
+        const type = String(parsed.type || parsed.chartType || '').toLowerCase();
+        if (!type) {
+          return null;
+        }
+
+        return {
+          type,
+          title: String(parsed.title || parsed.name || 'Chart'),
+          subtitle: String(parsed.subtitle || ''),
+          labels: Array.isArray(parsed.labels) ? parsed.labels.map(String) : [],
+          datasets: normalizeChartDatasets(parsed, type)
+        };
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function normalizeChartDatasets(parsed, type) {
+      const palette = ['#2563eb', '#0f766e', '#f59e0b', '#7c3aed', '#db2777', '#14b8a6'];
+      const baseColor = String(parsed.color || parsed.seriesColor || palette[0]);
+
+      if (type === 'pie' || type === 'doughnut') {
+        const labels = Array.isArray(parsed.labels) ? parsed.labels.map(String) : [];
+        const data = Array.isArray(parsed.data) ? parsed.data : Array.isArray(parsed.values) ? parsed.values : [];
+        return [{ label: String(parsed.datasetLabel || parsed.label || 'Value'), data: data.map(Number), color: baseColor, labels }];
+      }
+
+      if (Array.isArray(parsed.datasets) && parsed.datasets.length) {
+        return parsed.datasets.map((dataset, index) => ({
+          label: String(dataset.label || `Series ${index + 1}`),
+          data: Array.isArray(dataset.data) ? dataset.data.map(Number) : [],
+          color: String(dataset.color || palette[index % palette.length])
+        }));
+      }
+
+      if (Array.isArray(parsed.series) && parsed.series.length) {
+        return parsed.series.map((dataset, index) => ({
+          label: String(dataset.label || `Series ${index + 1}`),
+          data: Array.isArray(dataset.data) ? dataset.data.map(Number) : [],
+          color: String(dataset.color || palette[index % palette.length])
+        }));
+      }
+
+      const data = Array.isArray(parsed.data) ? parsed.data : [];
+      return [{ label: String(parsed.datasetLabel || parsed.label || 'Series 1'), data: data.map(Number), color: baseColor }];
+    }
+
+    function buildChartHtml(spec) {
+      const type = spec.type;
+      const palette = ['#2563eb', '#0f766e', '#f59e0b', '#7c3aed', '#db2777', '#14b8a6'];
+      const labels = spec.labels || [];
+      const datasets = spec.datasets || [];
+      const width = 760;
+      const height = 360;
+      const padding = { top: 28, right: 24, bottom: 48, left: 56 };
+
+      if (type === 'pie' || type === 'doughnut') {
+        const dataset = datasets[0];
+        const values = (dataset?.data || []).filter((value) => Number.isFinite(value));
+        const pieLabels = dataset?.labels?.length ? dataset.labels : labels;
+        if (!values.length) {
+          return '';
+        }
+
+        const total = values.reduce((sum, value) => sum + Math.max(value, 0), 0);
+        if (!total) {
+          return '';
+        }
+
+        const centerX = 210;
+        const centerY = 180;
+        const radius = 110;
+        const donutHole = type === 'doughnut' ? 58 : 0;
+        const slices = [];
+        let angle = -Math.PI / 2;
+
+        values.forEach((value, index) => {
+          const fraction = value / total;
+          const endAngle = angle + (Math.PI * 2 * fraction);
+          const startX = centerX + Math.cos(angle) * radius;
+          const startY = centerY + Math.sin(angle) * radius;
+          const endX = centerX + Math.cos(endAngle) * radius;
+          const endY = centerY + Math.sin(endAngle) * radius;
+          const largeArc = fraction > 0.5 ? 1 : 0;
+          const color = palette[index % palette.length];
+
+          slices.push(`<path d="M ${centerX} ${centerY} L ${startX.toFixed(2)} ${startY.toFixed(2)} A ${radius} ${radius} 0 ${largeArc} 1 ${endX.toFixed(2)} ${endY.toFixed(2)} Z" fill="${color}"></path>`);
+          angle = endAngle;
+        });
+
+        if (donutHole) {
+          slices.push(`<circle cx="${centerX}" cy="${centerY}" r="${donutHole}" fill="#eef4ff"></circle>`);
+        }
+
+        const legend = values.map((value, index) => {
+          const label = pieLabels[index] || `Slice ${index + 1}`;
+          return `<div class="chart-legend-item"><span class="chart-legend-swatch" style="background:${palette[index % palette.length]}"></span><span>${escapeHtml(label)}: ${formatChartNumber(value)}</span></div>`;
+        }).join('');
+
+        return `
+          <div class="chart-card">
+            <h5>${escapeHtml(spec.title)}</h5>
+            ${spec.subtitle ? `<p>${escapeHtml(spec.subtitle)}</p>` : ''}
+            <svg class="chart-svg" viewBox="0 0 440 360" role="img" aria-label="${escapeHtml(spec.title)}">
+              ${slices.join('')}
+            </svg>
+            <div class="chart-legend">${legend}</div>
+          </div>
+        `.trim();
+      }
+
+      const chartValues = datasets.flatMap((dataset) => dataset.data || []).filter((value) => Number.isFinite(value));
+      if (!chartValues.length) {
+        return '';
+      }
+
+      const minValue = type === 'scatter' ? Math.min(0, ...chartValues) : 0;
+      const maxValue = Math.max(...chartValues, 1);
+      const plotWidth = width - padding.left - padding.right;
+      const plotHeight = height - padding.top - padding.bottom;
+      const niceMax = maxValue === 0 ? 1 : maxValue;
+      const stepCount = 5;
+      const stepValue = niceMax / stepCount;
+      const horizontalStep = labels.length > 1 ? plotWidth / (labels.length - 1) : plotWidth;
+      const barGroupWidth = labels.length ? plotWidth / labels.length : plotWidth;
+      const barWidth = datasets.length ? Math.max(10, Math.min(28, (barGroupWidth / datasets.length) - 6)) : 24;
+      const pointRadius = 5;
+
+      const axisLines = [];
+      for (let step = 0; step <= stepCount; step += 1) {
+        const ratio = step / stepCount;
+        const y = padding.top + (plotHeight - (plotHeight * ratio));
+        const value = stepValue * step;
+        axisLines.push(`
+          <line x1="${padding.left}" y1="${y.toFixed(2)}" x2="${width - padding.right}" y2="${y.toFixed(2)}" stroke="rgba(15,23,42,0.08)" />
+          <text x="${padding.left - 10}" y="${(y + 4).toFixed(2)}" text-anchor="end" font-size="12" fill="rgba(15,23,42,0.72)">${formatChartNumber(value)}</text>
+        `);
+      }
+
+      const labelsSvg = labels.map((label, index) => {
+        const x = padding.left + (labels.length > 1 ? index * horizontalStep : plotWidth / 2);
+        return `<text x="${x.toFixed(2)}" y="${height - 18}" text-anchor="middle" font-size="12" fill="rgba(15,23,42,0.72)">${escapeHtml(label)}</text>`;
+      }).join('');
+
+      const renderedDatasets = datasets.map((dataset, datasetIndex) => {
+        const data = (dataset.data || []).map((value) => Number(value)).filter((value) => Number.isFinite(value));
+        const color = dataset.color || palette[datasetIndex % palette.length];
+
+        if (type === 'bar') {
+          return data.map((value, index) => {
+            const groupX = padding.left + index * barGroupWidth;
+            const x = groupX + (datasetIndex * (barWidth + 6)) + 6;
+            const normalized = Math.max(0, Math.min(1, (value - minValue) / (niceMax - minValue || 1)));
+            const barHeight = Math.max(0, normalized * plotHeight);
+            const y = padding.top + (plotHeight - barHeight);
+
+            return `<rect x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${barWidth}" height="${barHeight.toFixed(2)}" rx="6" fill="${color}"></rect>`;
+          }).join('');
+        }
+
+        if (type === 'line' || type === 'area' || type === 'scatter') {
+          const points = data.map((value, index) => {
+            const x = labels.length > 1 ? padding.left + index * horizontalStep : padding.left + plotWidth / 2;
+            const normalized = Math.max(0, Math.min(1, (value - minValue) / (niceMax - minValue || 1)));
+            const y = padding.top + (plotHeight - (normalized * plotHeight));
+            return { x, y, value };
+          });
+
+          if (type === 'scatter') {
+            return points.map((point) => `<circle cx="${point.x.toFixed(2)}" cy="${point.y.toFixed(2)}" r="${pointRadius}" fill="${color}" />`).join('');
+          }
+
+          const path = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(' ');
+          const areaPath = type === 'area' && points.length
+            ? `${path} L ${points[points.length - 1].x.toFixed(2)} ${height - padding.bottom} L ${points[0].x.toFixed(2)} ${height - padding.bottom} Z`
+            : '';
+
+          return `
+            ${type === 'area' ? `<path d="${areaPath}" fill="${color}33"></path>` : ''}
+            <path d="${path}" fill="none" stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+            ${points.map((point) => `<circle cx="${point.x.toFixed(2)}" cy="${point.y.toFixed(2)}" r="${pointRadius}" fill="${color}" />`).join('')}
+          `;
+        }
+
+        if (type === 'radar') {
+          const centerX = width / 2;
+          const centerY = (height / 2) - 10;
+          const radius = Math.min(plotWidth, plotHeight) / 2 - 24;
+          const count = Math.max(data.length, 3);
+          const points = data.map((value, index) => {
+            const angle = (-Math.PI / 2) + ((Math.PI * 2 * index) / count);
+            const normalized = Math.max(0, Math.min(1, (value - minValue) / (niceMax - minValue || 1)));
+            const r = radius * normalized;
+            const x = centerX + Math.cos(angle) * r;
+            const y = centerY + Math.sin(angle) * r;
+            return { x, y, angle, value };
+          });
+
+          const polygonPath = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(' ') + ' Z';
+          const grid = [];
+          for (let ring = 1; ring <= 4; ring += 1) {
+            const ringRadius = (radius * ring) / 4;
+            const ringPoints = [];
+            for (let index = 0; index < count; index += 1) {
+              const angle = (-Math.PI / 2) + ((Math.PI * 2 * index) / count);
+              const x = centerX + Math.cos(angle) * ringRadius;
+              const y = centerY + Math.sin(angle) * ringRadius;
+              ringPoints.push(`${index === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`);
+            }
+            grid.push(`<path d="${ringPoints.join(' ')} Z" fill="none" stroke="rgba(15,23,42,0.10)" />`);
+          }
+
+          const spokes = Array.from({ length: count }, (_, index) => {
+            const angle = (-Math.PI / 2) + ((Math.PI * 2 * index) / count);
+            const x = centerX + Math.cos(angle) * radius;
+            const y = centerY + Math.sin(angle) * radius;
+            return `<line x1="${centerX}" y1="${centerY}" x2="${x.toFixed(2)}" y2="${y.toFixed(2)}" stroke="rgba(15,23,42,0.10)" />`;
+          }).join('');
+
+          return `
+            ${grid.join('')}
+            ${spokes}
+            <path d="${polygonPath}" fill="${color}33" stroke="${color}" stroke-width="2.5" stroke-linejoin="round"></path>
+            ${points.map((point) => `<circle cx="${point.x.toFixed(2)}" cy="${point.y.toFixed(2)}" r="${pointRadius}" fill="${color}" />`).join('')}
+          `;
+        }
+
+        return '';
+      }).join('');
+
+      const legend = datasets.map((dataset, index) => `<div class="chart-legend-item"><span class="chart-legend-swatch" style="background:${dataset.color || palette[index % palette.length]}"></span><span>${escapeHtml(dataset.label || `Series ${index + 1}`)}</span></div>`).join('');
+
+      return `
+        <div class="chart-card">
+          <h5>${escapeHtml(spec.title)}</h5>
+          ${spec.subtitle ? `<p>${escapeHtml(spec.subtitle)}</p>` : ''}
+          <svg class="chart-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(spec.title)}">
+            <rect x="0" y="0" width="${width}" height="${height}" rx="18" fill="rgba(255,255,255,0.22)"></rect>
+            ${axisLines.join('')}
+            <line x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${height - padding.bottom}" stroke="rgba(15,23,42,0.16)" />
+            <line x1="${padding.left}" y1="${height - padding.bottom}" x2="${width - padding.right}" y2="${height - padding.bottom}" stroke="rgba(15,23,42,0.16)" />
+            ${renderedDatasets}
+            ${labelsSvg}
+          </svg>
+          <div class="chart-legend">${legend}</div>
+        </div>
+      `.trim();
+    }
+
+    function formatChartNumber(value) {
+      if (!Number.isFinite(value)) {
+        return '';
+      }
+
+      return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, '');
+    }
+
+    function isMarkdownTableSeparator(line) {
+      return /^\s*\|?\s*[:\-]{3,}(\s*\|\s*[:\-]{3,})+\s*\|?\s*$/.test(line.trim());
+    }
+
+    function parseMarkdownTable(lines, startIndex) {
+      const headerLine = lines[startIndex].trim();
+      const separatorLine = lines[startIndex + 1] || '';
+      if (!headerLine.includes('|') || !isMarkdownTableSeparator(separatorLine)) {
+        return { html: '', chartHtml: '', nextIndex: startIndex + 1 };
+      }
+
+      const headers = splitMarkdownTableRow(headerLine);
+      const rows = [];
+      let index = startIndex + 2;
+
+      while (index < lines.length) {
+        const rowLine = lines[index].trim();
+        if (!rowLine || !rowLine.includes('|')) {
+          break;
+        }
+
+        rows.push(splitMarkdownTableRow(rowLine));
+        index += 1;
+      }
+
+      const chartHtml = buildChartFromTable(headers, rows);
+      const tableHtml = `
+        <div class="markdown-table-wrapper">
+          <table class="markdown-table">
+            <thead><tr>${headers.map((cell) => `<th>${formatInlineMarkdown(cell)}</th>`).join('')}</tr></thead>
+            <tbody>${rows.map((row) => `<tr>${row.map((cell) => `<td>${formatInlineMarkdown(cell)}</td>`).join('')}</tr>`).join('')}</tbody>
+          </table>
+        </div>
+      `.trim();
+
+      return { html: tableHtml, chartHtml, nextIndex: index };
+    }
+
+    function buildChartFromTable(headers, rows) {
+      if (!Array.isArray(headers) || headers.length < 2 || !Array.isArray(rows) || !rows.length) {
+        return '';
+      }
+
+      const title = headers[0] ? `Chart for ${headers[0]}` : 'Table chart';
+      const labels = rows.map((row) => row[0] || '');
+      const valueColumns = headers.slice(1).map((header, columnIndex) => ({
+        label: header || `Series ${columnIndex + 1}`,
+        data: rows.map((row) => parseChartCellValue(row[columnIndex + 1]))
+      })).filter((series) => series.data.some((value) => Number.isFinite(value)));
+
+      if (!valueColumns.length) {
+        return '';
+      }
+
+      const cleanedLabels = labels.map((label, index) => label || `Item ${index + 1}`);
+      const resolvedType = valueColumns.length > 1 ? 'bar' : 'bar';
+
+      return buildChartHtml({
+        type: resolvedType,
+        title,
+        subtitle: 'Auto-generated from table data',
+        labels: cleanedLabels,
+        datasets: valueColumns.map((series, index) => ({
+          label: series.label,
+          data: series.data,
+          color: ['#2563eb', '#0f766e', '#f59e0b', '#7c3aed', '#db2777', '#14b8a6'][index % 6]
+        }))
+      });
+    }
+
+    function parseChartCellValue(value) {
+      if (value === null || value === undefined) {
+        return Number.NaN;
+      }
+
+      const cleanedValue = String(value).replace(/[^0-9.+-]/g, '').trim();
+      if (!cleanedValue) {
+        return Number.NaN;
+      }
+
+      const parsedValue = Number(cleanedValue);
+      return Number.isFinite(parsedValue) ? parsedValue : Number.NaN;
+    }
+
+    function splitMarkdownTableRow(line) {
+      return line
+        .trim()
+        .replace(/^\|/, '')
+        .replace(/\|$/, '')
+        .split('|')
+        .map((cell) => cell.trim());
+    }
+
+    function formatInlineMarkdown(value) {
+      let html = escapeHtml(value);
+      html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2">$1</a>');
+      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+      html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+      return html;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function looksLikeHtml(content) {
+      return /<[^>]+>/.test(content);
+    }
+
+    function appendHtmlMessage(role, html) {
+      const bubble = document.createElement('div');
+      bubble.className = `message ${role} html-message`;
+      bubble.innerHTML = sanitizeHtml(html);
+      chatLog.appendChild(bubble);
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    function sanitizeHtml(html) {
+      const template = document.createElement('template');
+      template.innerHTML = html;
+
+      const allowedTags = new Set(['A', 'ABBR', 'ADDRESS', 'ARTICLE', 'ASIDE', 'B', 'BDI', 'BDO', 'BLOCKQUOTE', 'BR', 'CAPTION', 'CODE', 'DD', 'DEL', 'DETAILS', 'DFN', 'DIV', 'DL', 'DT', 'EM', 'FIGCAPTION', 'FIGURE', 'FOOTER', 'FORM', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'HEADER', 'HR', 'I', 'IFRAME', 'IMG', 'INPUT', 'KBD', 'LI', 'MAIN', 'MARK', 'NAV', 'OL', 'P', 'PRE', 'S', 'SAMP', 'SECTION', 'SMALL', 'SPAN', 'STRONG', 'SUB', 'SUMMARY', 'SUP', 'TABLE', 'TBODY', 'TD', 'TEXTAREA', 'TFOOT', 'TH', 'THEAD', 'TR', 'UL', 'SVG', 'PATH', 'CIRCLE', 'RECT', 'LINE', 'POLYGON', 'POLYLINE', 'TEXT', 'G']);
+      const allowedAttributes = new Set(['href', 'target', 'rel', 'download', 'src', 'alt', 'loading', 'colspan', 'rowspan', 'scope', 'viewBox', 'role', 'aria-label', 'd', 'cx', 'cy', 'r', 'x', 'y', 'x1', 'y1', 'x2', 'y2', 'width', 'height', 'rx', 'fill', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'text-anchor', 'font-size', 'class', 'style', 'title', 'type', 'value', 'placeholder', 'checked', 'disabled', 'selected', 'name', 'id', 'for', 'rows', 'cols', 'maxlength', 'minlength', 'aria-hidden', 'aria-describedby', 'aria-labelledby', 'sandbox', 'referrerpolicy', 'allow', 'allowfullscreen']);
+
+      const walk = (node) => {
+        [...node.children].forEach((child) => {
+          if (!allowedTags.has(child.tagName)) {
+            child.replaceWith(...child.childNodes);
+            walk(node);
+            return;
+          }
+
+          [...child.attributes].forEach((attribute) => {
+            if (!allowedAttributes.has(attribute.name)) {
+              child.removeAttribute(attribute.name);
+            }
+          });
+
+          if (child.tagName === 'A') {
+            child.setAttribute('target', '_blank');
+            child.setAttribute('rel', 'noopener noreferrer');
+          }
+
+          walk(child);
+        });
+      };
+
+      walk(template.content);
+      return template.innerHTML;
+    }
+
+    function appendImageMessage(role, imageSrc, caption) {
+      const bubble = document.createElement('div');
+      bubble.className = `message ${role} media-image`;
+
+      const image = document.createElement('img');
+      image.src = imageSrc;
+      image.alt = caption || 'Generated image';
+
+      const text = document.createElement('div');
+      text.textContent = caption || 'Generated image';
+
+      bubble.appendChild(text);
+      bubble.appendChild(image);
+      chatLog.appendChild(bubble);
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    function extractStockChartRequest(message) {
+      const normalized = String(message || '').trim();
+      const chartPatterns = [
+        /^(?:load|show|display|open)?\s*(?:stock\s+)?chart\s+(?:for\s+)?([A-Za-z.\-]{1,12})(?:\s+(?:range|period)\s+([0-9]+[dwmy]|1mo|3mo|6mo|1y|2y))?(?:\s+(?:interval)\s+([0-9]+[mh]|1d|1wk|1mo))?$/i,
+        /^(?:load|show|display)?\s*(?:stock\s+)?market\s+chart\s+(?:for\s+)?([A-Za-z.\-]{1,12})(?:\s+(?:range|period)\s+([0-9]+[dwmy]|1mo|3mo|6mo|1y|2y))?(?:\s+(?:interval)\s+([0-9]+[mh]|1d|1wk|1mo))?$/i,
+        /^([A-Za-z.\-]{1,12})\s+(?:stock\s+)?chart(?:\s+(?:range|period)\s+([0-9]+[dwmy]|1mo|3mo|6mo|1y|2y))?(?:\s+(?:interval)\s+([0-9]+[mh]|1d|1wk|1mo))?$/i
+      ];
+
+      for (const pattern of chartPatterns) {
+        const match = normalized.match(pattern);
+        if (match) {
+          return {
+            symbol: match[1].trim().toUpperCase(),
+            range: (match[2] || '1mo').trim(),
+            interval: (match[3] || '1d').trim()
+          };
+        }
+      }
+
+      return null;
+    }
+
+    async function exportConversationAsPdf() {
+      const session = getActiveSession();
+      const history = getActiveSessionHistory();
+
+      if (!history.length) {
+        statusBox.textContent = 'There is no conversation to export yet.';
+        return;
+      }
+
+      const title = session?.title || 'Chat Transcript';
+      const exportDate = new Date().toLocaleString();
+
+      const lines = [];
+      lines.push('Ricky Khatri AI');
+      lines.push(title);
+      lines.push(`Exported: ${exportDate}`);
+      lines.push('');
+
+      history.forEach((entry, index) => {
+        const label = entry.role === 'assistant' || entry.role === 'bot' ? 'Assistant' : 'User';
+        lines.push(`${label} ${index + 1}:`);
+        wrapPdfText(entry.content, 88).forEach((line) => lines.push(line));
+        lines.push('');
+      });
+
+      const fileName = String(title)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'chat-transcript';
+
+      const blob = buildTextPdfBlob(lines);
+      const objectUrl = URL.createObjectURL(blob);
+
+      if (pdfObjectUrl) {
+        URL.revokeObjectURL(pdfObjectUrl);
+      }
+      pdfObjectUrl = objectUrl;
+
+      appendPdfDownloadMessage(fileName, objectUrl);
+
+      statusBox.textContent = 'PDF link added to chat.';
+    }
+
+    function wrapPdfText(text, maxChars) {
+      const safeText = String(text || '').replace(/\r\n/g, '\n');
+      const wrapped = [];
+
+      safeText.split('\n').forEach((paragraph) => {
+        if (!paragraph.trim()) {
+          wrapped.push('');
+          return;
+        }
+
+        let currentLine = '';
+        paragraph.split(/\s+/).forEach((word) => {
+          const nextLine = currentLine ? `${currentLine} ${word}` : word;
+          if (nextLine.length > maxChars) {
+            if (currentLine) {
+              wrapped.push(currentLine);
+            }
+            currentLine = word;
+          } else {
+            currentLine = nextLine;
+          }
+        });
+
+        if (currentLine) {
+          wrapped.push(currentLine);
+        }
+      });
+
+      return wrapped;
+    }
+
+    function appendPdfDownloadMessage(fileName, objectUrl) {
+      const safeFileName = escapeHtml(`${fileName}.pdf`);
+      const safeUrl = escapeHtml(objectUrl);
+      appendHtmlMessage(
+        'bot',
+        `
+          <div class="reply-with-preview">
+            <div class="reply-text">Your PDF is ready.</div>
+            <a href="${safeUrl}" download="${safeFileName}">Download ${safeFileName}</a>
+          </div>
+        `
+      );
+    }
+
+    function buildTextPdfBlob(lines) {
+      const pageWidth = 595.28;
+      const pageHeight = 841.89;
+      const marginLeft = 48;
+      const marginTop = 54;
+      const lineHeight = 16;
+      const maxLinesPerPage = Math.floor((pageHeight - marginTop * 2) / lineHeight);
+      const pages = [];
+
+      for (let index = 0; index < lines.length; index += maxLinesPerPage) {
+        pages.push(lines.slice(index, index + maxLinesPerPage));
+      }
+
+      const objects = [];
+      const objectIds = {
+        catalog: 1,
+        pages: 2,
+        font: 3
+      };
+
+      const pageObjectIds = pages.map((_, index) => 4 + (index * 2));
+      const contentObjectIds = pages.map((_, index) => 5 + (index * 2));
+
+      const escapePdfText = (value) => String(value || '')
+        .normalize('NFKD')
+        .replace(/[^\x20-\x7E]/g, '?')
+        .replace(/\\/g, '\\\\')
+        .replace(/\(/g, '\\(')
+        .replace(/\)/g, '\\)');
+
+      objects.push({
+        num: objectIds.catalog,
+        content: `${objectIds.catalog} 0 obj\n<< /Type /Catalog /Pages ${objectIds.pages} 0 R >>\nendobj`
+      });
+
+      objects.push({
+        num: objectIds.pages,
+        content: `${objectIds.pages} 0 obj\n<< /Type /Pages /Kids [ ${pageObjectIds.map((id) => `${id} 0 R`).join(' ')} ] /Count ${pages.length} >>\nendobj`
+      });
+
+      objects.push({
+        num: objectIds.font,
+        content: `${objectIds.font} 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj`
+      });
+
+      pages.forEach((pageLines, pageIndex) => {
+        const pageContent = [];
+        const startY = pageHeight - marginTop;
+        pageLines.forEach((line, lineIndex) => {
+          const y = startY - (lineIndex * lineHeight);
+          pageContent.push(`BT /F1 11 Tf 1 0 0 1 ${marginLeft} ${y.toFixed(2)} Tm (${escapePdfText(line)}) Tj ET`);
+        });
+
+        const pageObjId = pageObjectIds[pageIndex];
+        const contentObjId = contentObjectIds[pageIndex];
+        const stream = pageContent.join('\n');
+
+        objects.push({
+          num: contentObjId,
+          content: `${contentObjId} 0 obj\n<< /Length ${stream.length} >>\nstream\n${stream}\nendstream\nendobj`
+        });
+
+        objects.push({
+          num: pageObjId,
+          content: `${pageObjId} 0 obj\n<< /Type /Page /Parent ${objectIds.pages} 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /Font << /F1 ${objectIds.font} 0 R >> >> /Contents ${contentObjId} 0 R >>\nendobj`
+        });
+      });
+
+      objects.sort((left, right) => left.num - right.num);
+
+      let pdfBody = '%PDF-1.4\n';
+      const offsets = [];
+
+      objects.forEach((object) => {
+        offsets[object.num] = pdfBody.length;
+        pdfBody += `${object.content}\n`;
+      });
+
+      const maxObjectId = objects.reduce((highest, object) => Math.max(highest, object.num), 0);
+
+      const xrefOffset = pdfBody.length;
+      let xref = `xref\n0 ${maxObjectId + 1}\n0000000000 65535 f \n`;
+
+      for (let objectId = 1; objectId <= maxObjectId; objectId += 1) {
+        const offset = offsets[objectId] || 0;
+        xref += `${String(offset).padStart(10, '0')} 00000 n \n`;
+      }
+
+      const trailer = `trailer\n<< /Size ${maxObjectId + 1} /Root ${objectIds.catalog} 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+      const pdfString = pdfBody + xref + trailer;
+
+      return new Blob([pdfString], { type: 'application/pdf' });
+    }
+  </script>
+  <script src="/site-footer.js"></script>
+</body>
+</html>
