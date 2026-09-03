@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -21,7 +22,11 @@
       --shadow: 0 30px 80px rgba(0, 0, 0, 0.36);
     }
 
-    *, *::before, *::after { box-sizing: border-box; }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
@@ -162,15 +167,42 @@
       pointer-events: none;
     }
 
-    .code-highlighter .token-keyword { color: #93c5fd; }
-    .code-highlighter .token-type { color: #f9a8d4; }
-    .code-highlighter .token-string { color: #86efac; }
-    .code-highlighter .token-comment { color: #94a3b8; font-style: italic; }
-    .code-highlighter .token-number { color: #fbbf24; }
-    .code-highlighter .token-fn { color: #67e8f9; }
-    .code-highlighter .token-annotation { color: #c084fc; }
-    .code-highlighter .token-operator { color: #e5eefb; }
-    .code-highlighter .token-plain { color: #dbeafe; }
+    .code-highlighter .token-keyword {
+      color: #93c5fd;
+    }
+
+    .code-highlighter .token-type {
+      color: #f9a8d4;
+    }
+
+    .code-highlighter .token-string {
+      color: #86efac;
+    }
+
+    .code-highlighter .token-comment {
+      color: #94a3b8;
+      font-style: italic;
+    }
+
+    .code-highlighter .token-number {
+      color: #fbbf24;
+    }
+
+    .code-highlighter .token-fn {
+      color: #67e8f9;
+    }
+
+    .code-highlighter .token-annotation {
+      color: #c084fc;
+    }
+
+    .code-highlighter .token-operator {
+      color: #e5eefb;
+    }
+
+    .code-highlighter .token-plain {
+      color: #dbeafe;
+    }
 
     .field:focus,
     .code-editor:focus {
@@ -275,8 +307,15 @@
       min-height: 42px;
     }
 
-    .button:hover { transform: translateY(-1px); }
-    .button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .button:hover {
+      transform: translateY(-1px);
+    }
+
+    .button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
 
     .button.primary {
       background: linear-gradient(135deg, #60a5fa, #2563eb);
@@ -381,31 +420,59 @@
     }
 
     @media (max-width: 960px) {
-      .content { grid-template-columns: 1fr; }
-      .code-editor { min-height: 280px; }
-      .output-drawer { width: calc(100vw - 24px); right: 12px; bottom: 12px; }
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .code-editor {
+        min-height: 280px;
+      }
+
+      .output-drawer {
+        width: calc(100vw - 24px);
+        right: 12px;
+        bottom: 12px;
+      }
     }
 
     @media (max-width: 640px) {
-      body { padding: 12px; }
-      .hero, .content { padding-left: 14px; padding-right: 14px; }
-      .page { border-radius: 20px; }
-      .button { width: 100%; }
-      .hero-actions { width: 100%; }
+      body {
+        padding: 12px;
+      }
+
+      .hero,
+      .content {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      .page {
+        border-radius: 20px;
+      }
+
+      .button {
+        width: 100%;
+      }
+
+      .hero-actions {
+        width: 100%;
+      }
     }
   </style>
 </head>
+
 <body>
   <main class="page">
     <section class="hero">
       <div>
         <div class="eyebrow">Ricky Khatri AI</div>
         <h1>Kotlin Code Lab</h1>
-        <p class="subtitle">Generate, edit, validate, and run Kotlin snippets in a dedicated workspace. Use the generator for fast drafts, then refine the code directly in the editor.</p>
+        <p class="subtitle">Generate, edit, validate, and run Kotlin snippets in a dedicated workspace. Use the
+          generator for fast drafts, then refine the code directly in the editor.</p>
       </div>
-      <div class="hero-actions">
+      <!-- <div class="hero-actions">
         <a class="button secondary" href="/index.html">Back to Chatbot</a>
-      </div>
+      </div> -->
     </section>
 
     <section class="content">
@@ -413,14 +480,17 @@
         <div class="card-header">
           <div>
             <div class="card-title">Generator and editor</div>
-            <div class="tool-hint">Describe what you want, generate a snippet, then run the code directly from this page.</div>
+            <div class="tool-hint">Describe what you want, generate a snippet, then run the code directly from this
+              page.</div>
           </div>
         </div>
 
-        <input id="codePromptInput" class="field" type="text" placeholder="Describe the Kotlin code you want generated" />
+        <input id="codePromptInput" class="field" type="text"
+          placeholder="Describe the Kotlin code you want generated" />
         <div class="editor-shell">
           <pre id="codeHighlighter" class="code-highlighter" aria-hidden="true"></pre>
-          <textarea id="kotlinCodeInput" class="code-editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" placeholder="Paste Kotlin code here to run it..."></textarea>
+          <textarea id="kotlinCodeInput" class="code-editor" spellcheck="false" autocapitalize="off" autocomplete="off"
+            autocorrect="off" placeholder="Paste Kotlin code here to run it..."></textarea>
         </div>
 
         <div class="editor-toolbar">
@@ -428,7 +498,8 @@
             <button id="formatCodeBtn" class="button secondary" type="button">Auto Format</button>
             <button id="toggleAutoFormatBtn" class="button secondary" type="button">Auto Format: Off</button>
           </div>
-          <div class="tool-hint">Type <strong>prin</strong> to see built-in completions like <strong>println()</strong> and press Ctrl+Space for insertable suggestions.</div>
+          <div class="tool-hint">Type <strong>prin</strong> to see built-in completions like <strong>println()</strong>
+            and press Ctrl+Space for insertable suggestions.</div>
         </div>
       </div>
 
@@ -453,7 +524,8 @@
           <div class="card-header">
             <div>
               <div class="card-title">Live coding suggestions</div>
-              <div id="codeSuggestionHint" class="tool-hint">Suggestions update as you type. Press Ctrl+Space to open completions.</div>
+              <div id="codeSuggestionHint" class="tool-hint">Suggestions update as you type. Press Ctrl+Space to open
+                completions.</div>
             </div>
           </div>
           <div id="codeSuggestionList" class="suggestion-list"></div>
@@ -1069,4 +1141,5 @@
     }
   </script>
 </body>
+
 </html>

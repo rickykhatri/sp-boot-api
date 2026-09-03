@@ -50,7 +50,7 @@ class ChatController(
     @Value("\${chat.provider:ollama}")
     private lateinit var chatProvider: String
 
-    @Value("\${chat.ollama.url:http://localhost:11434}")
+    @Value("\${chat.ollama.url:https://rkchat-ai.duckdns.org}")
     private lateinit var ollamaBaseUrl: String
 
     @Value("\${chat.ollama.model:llama3.2}")
@@ -165,38 +165,86 @@ class ChatController(
      * @return The content of the response message or a default message if no reply is returned.
      * @throws Exception if there is an error during the API call.
      */
+    // private fun callOllama(message: String, history: List<ChatMessage>): String {
+    //     val model = if (ollamaModel.isNotBlank()) ollamaModel else "llama3.2"
+    //     val baseUrl = if (ollamaBaseUrl.isNotBlank()) ollamaBaseUrl else "http://localhost:11434"
+    //     val client = restClientBuilder.build()
+
+    //     val response = client.post()
+    //         .uri("$baseUrl/api/chat")
+    //         .header("Content-Type", "application/json")
+    //         .body(
+    //             OllamaChatRequest(
+    //                 model = model,
+    //                 messages = listOf(
+    //                     ChatMessage("system", buildSystemPrompt()),
+    //                     *history.toTypedArray(),
+    //                     ChatMessage("user", message)
+    //                 )
+    //             )
+    //         )
+    //         .retrieve()
+    //         .body(Map::class.java)
+
+    //     val messageObject = response?.get("message") as? Map<*, *>
+    //     val reply = (messageObject?.get("content")?.toString())
+    //         ?: response?.get("response")?.toString()
+    //         ?: "No reply returned."
+
+    //     return if (shouldFallbackToGoogle(reply)) {
+    //         callGoogleSearch(message)
+    //     } else {
+    //         reply
+    //     }
+    // }
+
     private fun callOllama(message: String, history: List<ChatMessage>): String {
-        val model = if (ollamaModel.isNotBlank()) ollamaModel else "llama3.2"
-        val baseUrl = if (ollamaBaseUrl.isNotBlank()) ollamaBaseUrl else "http://localhost:11434"
-        val client = restClientBuilder.build()
 
-        val response = client.post()
-            .uri("$baseUrl/api/chat")
-            .header("Content-Type", "application/json")
-            .body(
-                OllamaChatRequest(
-                    model = model,
-                    messages = listOf(
-                        ChatMessage("system", buildSystemPrompt()),
-                        *history.toTypedArray(),
-                        ChatMessage("user", message)
-                    )
-                )
+val model = if (ollamaModel.isNotBlank()) {
+    ollamaModel
+} else {
+    "llama3.2"
+}
+
+val baseUrl = if (ollamaBaseUrl.isNotBlank()) {
+    ollamaBaseUrl.trimEnd('/')
+} else {
+    "https://rkchat-ai.duckdns.org"
+}
+
+val client = restClientBuilder.build()
+
+val response = client.post()
+    .uri("$baseUrl/api/chat")
+    .header("Content-Type", "application/json")
+    .body(
+        OllamaChatRequest(
+            model = model,
+            messages = listOf(
+                ChatMessage("system", buildSystemPrompt()),
+                *history.toTypedArray(),
+                ChatMessage("user", message)
             )
-            .retrieve()
-            .body(Map::class.java)
+        )
+    )
+    .retrieve()
+    .body(Map::class.java)
 
-        val messageObject = response?.get("message") as? Map<*, *>
-        val reply = (messageObject?.get("content")?.toString())
-            ?: response?.get("response")?.toString()
-            ?: "No reply returned."
+val messageObject = response?.get("message") as? Map<*, *>
 
-        return if (shouldFallbackToGoogle(reply)) {
-            callGoogleSearch(message)
-        } else {
-            reply
-        }
-    }
+val reply =
+    messageObject?.get("content")?.toString()
+        ?: response?.get("response")?.toString()
+        ?: "No reply returned."
+
+return if (shouldFallbackToGoogle(reply)) {
+    callGoogleSearch(message)
+} else {
+    reply
+}
+
+}
+
 
     private fun shouldFallbackToGoogle(reply: String): Boolean {
         val normalized = reply.lowercase()

@@ -1,0 +1,17 @@
+services:
+  ktor-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ktor-api
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Kolkata
+      JAVA_OPTS: "-Xms128m -Xmx512m"
+    volumes:
+      - app-data:/app/data
+
+volumes:
+  app-data:

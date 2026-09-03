@@ -1,6 +1,6 @@
 class SiteFooter extends HTMLElement {
   connectedCallback() {
-    const brand = this.getAttribute('brand') || 'Ricky Khatri AI';
+    const brand = this.getAttribute('brand') || 'RK Smart Chat - by Ricky Khatri';
     const year = this.getAttribute('year') || '2026';
 
     this.style.display = 'block';
